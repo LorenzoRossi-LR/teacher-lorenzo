@@ -24,3 +24,5 @@ Se una decisione ne supera un'altra, si aggiunge una voce nuova con `[supersedes
 ## 2026-09-15 — L'allenamento è un rituale serale: evento Google Calendar ricorrente alle 21:30 con promemoria a 10 minuti e all'ora esatta, che porta il link dell'app su telefono e computer
 
 ## 2026-09-15 — Le frasi realmente andate in onda si raccolgono a mano nella scheda Archivio TV di Ruota Lab e vivono in corpus/tv-reali marcate come autentiche, separate dalle generate; sopra le 20 frasi si può giocare solo con quelle
+
+## 2026-09-16 — Il promemoria serale di Ruota Lab si sposta a 23:45–00:00 (Europe/Rome): la sessione chiude la giornata a mezzanotte [supersedes: 2026-09-15 promemoria alle 21:30]

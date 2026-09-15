@@ -5,7 +5,7 @@ edizione con Gerry Scotti): come candidarsi, come allenarsi, e il trainer softwa
 costruito per farlo. **Questo file è la fonte di verità**: se una chat si azzera o viene
 compattata, si riparte da qui.
 
-Ultimo aggiornamento: **2026-09-15**
+Ultimo aggiornamento: **2026-09-16**
 
 ---
 
@@ -18,7 +18,7 @@ Ultimo aggiornamento: **2026-09-15**
 | Sorgenti del trainer | `ruota-lab/` in questo repo |
 | Corpus iniziale (390 frasi) | `ruota-lab/seed/*.json` |
 | Routine settimanale | trigger `trig_01CTXc8v9cFvUQCH6VTxfnKS`, lunedì 06:00 (04:00 UTC) |
-| Promemoria serale | evento Google Calendar ricorrente, ogni giorno 21:30–21:45 (Europe/Rome), id `4738j6at75qogmsdf02llrtolk` |
+| Promemoria serale | evento Google Calendar ricorrente, ogni giorno 23:45–00:00 (Europe/Rome), id `4738j6at75qogmsdf02llrtolk` |
 | Branch di lavoro | `claude/ruota-fortuna-partecipazione-tkb7up` |
 
 > L'URL dell'artifact è la **chiave del database**: senza quello, in una nuova chat
@@ -134,7 +134,7 @@ policy di sicurezza degli artifact blocca ogni chiamata di rete in uscita. La pa
 quindi Claude come motore interno (capacità `sample`, a carico dell'account di chi apre).
 
 **Il rituale serale (la parte che tiene in piedi tutto)**
-Ogni sera alle 21:30 un evento di calendario con promemoria (10 minuti prima e all'ora esatta)
+Ogni sera alle 23:45 — chiude a mezzanotte — un evento di calendario con promemoria (10 minuti prima e all'ora esatta)
 porta il link dell'app. Si apre sulla scheda **Oggi**, che mostra già la sessione pronta:
 tre blocchi da circa dieci minuti scelti automaticamente dai propri numeri, un pulsante
 "Inizia la sessione" e si va in fila da un esercizio all'altro senza tornare al menu.
@@ -305,3 +305,5 @@ dalle generate.
 ## 2026-09-15 — Il rituale è serale: un evento Google Calendar ricorrente alle 21:30 con promemoria a 10 minuti e all'ora esatta porta il link dell'app su telefono e computer
 
 ## 2026-09-15 — Le frasi realmente andate in onda si raccolgono a mano nella scheda Archivio TV e vivono in `corpus/tv-reali` marcate come autentiche, separate da quelle generate; sopra le 20 frasi si può giocare solo con quelle
+
+## 2026-09-16 — Il promemoria serale si sposta a 23:45–00:00: la sessione chiude la giornata a mezzanotte [supersedes: 2026-09-15 promemoria alle 21:30]
