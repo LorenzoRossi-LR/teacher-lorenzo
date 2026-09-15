@@ -151,7 +151,9 @@
     stats: null,
     mistakes: { counts: {}, recent: [] },
     rules: [],
-    games: []
+    games: [],
+    settings: { onlyTV: false },
+    sessions: {}
   };
 
   var DEFAULT_STATS = {
@@ -193,7 +195,10 @@
       snap.docs.forEach(function (d) {
         var v = d.data() || {};
         (v.items || []).forEach(function (it) {
-          if (it && it.t) out.push({ t: String(it.t).toUpperCase(), cat: d.id, label: v.label || d.id });
+          if (it && it.t) out.push({
+            t: String(it.t).toUpperCase(), cat: d.id, label: v.label || d.id,
+            tv: !!v.authentic, d: it.d || "", m: it.m || ""
+          });
         });
       });
       if (out.length > 8) S.corpus = out;
@@ -217,6 +222,16 @@
       var rs = await S.db.collection("rules").get();
       S.rules = rs.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
     } catch (e) { S.rules = []; }
+
+    try {
+      var st2 = await S.db.doc("settings/app").get();
+      if (st2.exists) S.settings = Object.assign({ onlyTV: false }, st2.data());
+    } catch (e) { }
+
+    try {
+      var ss = await S.db.doc("sessions/log").get();
+      if (ss.exists) S.sessions = ss.data().days || {};
+    } catch (e) { }
 
     try {
       var gs = await S.db.collection("games").orderBy("at", "desc").limit(20).get();
@@ -290,6 +305,10 @@
 
   function pickPuzzle(cat) {
     var pool = S.corpus;
+    if (S.settings.onlyTV) {
+      var tv = S.corpus.filter(function (p) { return p.tv; });
+      if (tv.length >= 20) { pool = tv; cat = null; }
+    }
     if (cat) {
       var f = S.corpus.filter(function (p) { return p.cat === cat; });
       if (f.length > 4) pool = f;
@@ -883,9 +902,16 @@
     });
     if (!won) logMistake("finale_incompleto", F.done + "/3 tabelloni");
     recordDrill("finale", won, Math.max(0, Date.now() - F.t0), { finaleOk: won ? 1 : 0, finaleN: 1 });
-    var close = el("button", "btn primary", "Chiudi");
-    close.onclick = function () { $("drill-modal").classList.remove("on"); newGame(); renderAll(); };
-    b.appendChild(close);
+    if (SESSION && SESSION.active) {
+      var nx2 = el("button", "btn primary",
+        SESSION.i < SESSION.queue.length - 1 ? "Blocco successivo \u2192" : "Chiudi la sessione");
+      nx2.onclick = sessionNext;
+      b.appendChild(nx2);
+    } else {
+      var close = el("button", "btn primary", "Chiudi");
+      close.onclick = function () { closeModal(); newGame(); renderAll(); };
+      b.appendChild(close);
+    }
   }
 
   /* ══════════════════════════════════════════════════════════
@@ -1216,6 +1242,15 @@
   function again(fn) {
     var wrap = el("div", "row");
     wrap.style.marginTop = "10px";
+    if (SESSION && SESSION.active) {
+      var nx = el("button", "btn primary sm",
+        SESSION.i < SESSION.queue.length - 1 ? "Blocco successivo \u2192" : "Chiudi la sessione");
+      nx.onclick = sessionNext;
+      var rp = el("button", "btn ghost sm", "Ripeti questo");
+      rp.onclick = fn;
+      wrap.appendChild(nx); wrap.appendChild(rp);
+      return wrap;
+    }
     var a = el("button", "btn primary sm", "Un'altra");
     a.onclick = fn;
     var c = el("button", "btn ghost sm", "Chiudi");
@@ -1597,6 +1632,266 @@
     host.appendChild(s2);
   }
 
+
+  /* ══════════════════════════════════════════════════════════
+     OGGI — la sessione del giorno
+     ══════════════════════════════════════════════════════════ */
+
+  var SESSION = null;
+
+  var BLOCKS = {
+    soglia: { nome: "Soglia di informazione", code: "D1", min: 4, run: drillSoglia },
+    testacoda: { nome: "Testacoda", code: "D2", min: 3, run: drillTestacoda },
+    rubasecondi: { nome: "Rubasecondi", code: "D3", min: 3, run: drillRuba },
+    pulsante: { nome: "Pulsante", code: "D4", min: 4, run: drillPulsante },
+    griglia: { nome: "Lettura della griglia", code: "D6", min: 2, run: drillGriglia },
+    finale: { nome: "Finale in 60 secondi", code: "D5", min: 3, run: function () { startFinale(0); } }
+  };
+
+  function dayKey(offset) {
+    var d = new Date();
+    d.setDate(d.getDate() + (offset || 0));
+    return d.toISOString().slice(0, 10);
+  }
+
+  function streakLength() {
+    var n = 0, i = 0;
+    if (!S.sessions[dayKey(0)]) i = 1;
+    while (S.sessions[dayKey(-i)]) { n++; i++; }
+    return n;
+  }
+
+  function prescribe() {
+    var k = S.stats.kpi || {}, m = S.mistakes.counts || {}, dr = S.stats.drills || {};
+    var cand = [];
+    function push(id, prio, why) { cand.push({ id: id, prio: prio, why: why }); }
+
+    var soglia = k.sogliaN ? k.sogliaSum / k.sogliaN : null;
+    push("soglia", soglia == null ? 70 : (soglia > 0.45 ? 96 : soglia > 0.38 ? 62 : 34),
+      soglia == null ? "Non hai ancora una soglia di riferimento"
+        : "Risolvi con il " + pct(soglia) + " delle lettere scoperte");
+
+    var buzz = k.buzzN ? k.buzzOk / k.buzzN : null;
+    push("pulsante", buzz == null ? 64 : (buzz < 0.7 ? 90 : buzz < 0.85 ? 55 : 30),
+      buzz == null ? "Prenotazione al pulsante mai misurata"
+        : pct(buzz) + " di prenotazioni corrette");
+
+    var fin = k.finaleN ? k.finaleOk / k.finaleN : null;
+    push("finale", fin == null ? 84 : (fin < 0.6 ? 93 : fin < 0.8 ? 58 : 36),
+      fin == null ? "Il finale vale fino a 200.000 €: va provato"
+        : pct(fin) + " di finali completati");
+
+    var gri = k.grigliaN ? k.grigliaSum / k.grigliaN : null;
+    push("griglia", gri == null ? 58 : (gri < 8 ? 86 : gri < 10 ? 48 : 26),
+      gri == null ? "Apertura del finale mai misurata"
+        : gri.toFixed(1) + " caselle scoperte per apertura");
+
+    var sprechi = (m.rubasecondi_spreco || 0) + (m.lettera_ripetuta || 0);
+    push("rubasecondi", Math.min(94, 40 + sprechi * 9),
+      sprechi ? sprechi + " lettere buttate a vuoto finora" : "Disciplina delle chiamate sicure");
+
+    var td = dr.testacoda;
+    push("testacoda", td ? (td.ok / Math.max(1, td.runs) < 0.6 ? 80 : 44) : 66,
+      td ? Math.round(100 * td.ok / Math.max(1, td.runs)) + "% di Testacoda risolti"
+        : "Testacoda mai allenato");
+
+    var ieri = S.sessions[dayKey(-1)];
+    if (ieri && ieri.blocks) {
+      cand.forEach(function (c) { if (ieri.blocks.indexOf(c.id) >= 0) c.prio -= 14; });
+    }
+    cand.sort(function (a, b) { return b.prio - a.prio; });
+    return cand.slice(0, 3);
+  }
+
+  function renderToday() {
+    var host = $("today-host");
+    if (!host) return;
+    host.innerHTML = "";
+
+    var fatta = !!S.sessions[dayKey(0)];
+    var st = streakLength();
+    var plan = prescribe();
+    var mins = plan.reduce(function (a, b) { return a + BLOCKS[b.id].min; }, 0);
+    var titolo = fatta ? "Fatto. Ci vediamo domani." : "Tre blocchi, circa " + mins + " minuti";
+
+    /* striscia della costanza */
+    var strip = el("div", "streak");
+    for (var i = 6; i >= 0; i--) {
+      var d = dayKey(-i);
+      var cell = el("div", "sday" + (S.sessions[d] ? " on" : "") + (i === 0 ? " today" : ""));
+      cell.title = d;
+      cell.appendChild(el("span", null, ["D", "L", "M", "M", "G", "V", "S"][new Date(d + "T12:00:00").getDay()]));
+      strip.appendChild(cell);
+    }
+    var head = el("div", "today-head");
+    var left = el("div");
+    left.appendChild(el("p", "eyebrow", fatta ? "Sessione di oggi completata" : "La sessione di stasera"));
+    left.appendChild(el("h2", null, titolo));
+    var right = el("div", "streak-box");
+    right.appendChild(el("b", null, String(st)));
+    right.appendChild(el("span", null, st === 1 ? "giorno di fila" : "giorni di fila"));
+    head.appendChild(left); head.appendChild(right);
+    host.appendChild(head);
+    host.appendChild(strip);
+
+    var why = el("p", "lead");
+    why.textContent = fatta
+      ? "Hai già allenato oggi. Se vuoi insistere, puoi rifare la sessione: i risultati contano lo stesso."
+      : "Scelti dai tuoi numeri: questi tre blocchi attaccano i punti dove stai perdendo di più.";
+    host.appendChild(why);
+
+    var list = el("div", "blocks");
+    plan.forEach(function (b, i2) {
+      var B2 = BLOCKS[b.id];
+      var row = el("div", "block");
+      var n = el("div", "bnum", String(i2 + 1));
+      var body = el("div", "bbody");
+      var t = el("h3", null, B2.nome);
+      body.appendChild(t);
+      body.appendChild(el("p", null, b.why));
+      var meta = el("div", "bmeta mono");
+      meta.textContent = B2.code + " · ~" + B2.min + " min";
+      body.appendChild(meta);
+      var go = el("button", "btn ghost sm", "Solo questo");
+      go.onclick = function () { SESSION = null; B2.run(); };
+      row.appendChild(n); row.appendChild(body); row.appendChild(go);
+      list.appendChild(row);
+    });
+    host.appendChild(list);
+
+    var cta = el("button", "btn primary big", (fatta ? "Rifai la sessione" : "Inizia la sessione") + " · ~" + mins + " min");
+    cta.onclick = function () { startSession(plan); };
+    host.appendChild(cta);
+
+    var due = dueRules().length;
+    var extras = el("div", "extras");
+    if (due) {
+      var r = el("button", "btn sm", "Ripassa " + due + " carte regola");
+      r.onclick = function () { gotoTab("regole"); };
+      extras.appendChild(r);
+    }
+    var g = el("button", "btn sm", "Partita completa (~12 min)");
+    g.onclick = function () { B = null; newGame(); renderAll(); gotoTab("gioca"); };
+    extras.appendChild(g);
+    host.appendChild(extras);
+  }
+
+  function startSession(plan) {
+    SESSION = { queue: plan, i: -1, active: true, t0: Date.now(), blocks: [] };
+    sessionNext();
+  }
+
+  function sessionNext() {
+    if (!SESSION) return;
+    if (SESSION.i >= 0) SESSION.blocks.push(SESSION.queue[SESSION.i].id);
+    SESSION.i++;
+    if (SESSION.i >= SESSION.queue.length) { finishSession(); return; }
+    BLOCKS[SESSION.queue[SESSION.i].id].run();
+  }
+
+  async function finishSession() {
+    var mins = Math.max(1, Math.round((Date.now() - SESSION.t0) / 60000));
+    var blocks = SESSION.blocks.slice();
+    SESSION.active = false;
+    S.sessions[dayKey(0)] = { at: Date.now(), blocks: blocks, mins: mins };
+    if (S.db) {
+      try { await S.db.doc("sessions/log").set({ days: S.sessions }); } catch (e) { }
+    }
+    var b = drillShell("Sessione completata");
+    var st = streakLength();
+    var h = el("h3", "d", st > 1 ? st + " giorni di fila." : "Prima sessione registrata.");
+    b.appendChild(h);
+    b.appendChild(el("p", null, "Hai chiuso " + blocks.length + " blocchi in circa " + mins + " minuti. " +
+      "I risultati sono già nelle statistiche: domani la sessione cambia di conseguenza."));
+    var row = el("div", "row");
+    var due = dueRules().length;
+    if (due) {
+      var r = el("button", "btn sm", "Ripassa " + due + " carte regola");
+      r.onclick = function () { closeModal(); gotoTab("regole"); };
+      row.appendChild(r);
+    }
+    var g = el("button", "btn sm", "Una partita completa");
+    g.onclick = function () { closeModal(); B = null; newGame(); renderAll(); gotoTab("gioca"); };
+    var c = el("button", "btn primary sm", "Chiudi");
+    c.onclick = function () { closeModal(); renderToday(); };
+    row.appendChild(g); row.appendChild(c);
+    b.appendChild(row);
+    SESSION = null;
+    renderToday();
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     ARCHIVIO TV — frasi realmente andate in onda
+     ══════════════════════════════════════════════════════════ */
+
+  function renderArchive() {
+    var tv = S.corpus.filter(function (p) { return p.tv; });
+    $("tv-count").textContent = tv.length
+      ? tv.length + (tv.length === 1 ? " frase autentica in archivio" : " frasi autentiche in archivio")
+      : "Archivio ancora vuoto";
+    var host = $("tv-list"); host.innerHTML = "";
+    tv.slice(-12).reverse().forEach(function (p) {
+      var d = el("div", "mono");
+      d.style.cssText = "font-size:.84rem;color:var(--ink-soft)";
+      d.textContent = (p.d ? p.d + "  " : "") + p.t + (p.m ? "  · " + p.m : "");
+      host.appendChild(d);
+    });
+    var cb = $("tv-only");
+    cb.checked = !!S.settings.onlyTV;
+    cb.disabled = tv.length < 20;
+    $("tv-only-note").textContent = tv.length < 20
+      ? "Disponibile da 20 frasi in su (ne mancano " + (20 - tv.length) + ")."
+      : "Il gioco e gli esercizi pescheranno solo da qui.";
+  }
+
+  async function importTV() {
+    var out = $("tv-out");
+    if (!S.db) { out.textContent = "Archivio non collegato."; return; }
+    var raw = $("tv-text").value || "";
+    var data = ($("tv-date").value || "").trim();
+    var manche = ($("tv-manche").value || "").trim();
+    var have = {};
+    S.corpus.forEach(function (p) { have[p.t] = true; });
+    var clean = [], scarti = 0;
+    raw.split("\n").forEach(function (line) {
+      var t = line.toUpperCase().replace(/[’`]/g, "'").replace(/[^A-Z' ÀÈÉÌÒÙ]/g, "").replace(/\s+/g, " ").trim();
+      if (!t) return;
+      if (t.length < 6 || t.length > 48 || have[t]) { scarti++; return; }
+      have[t] = true;
+      clean.push({ t: t, d: data, m: manche });
+    });
+    if (!clean.length) { out.textContent = "Nessuna frase nuova da aggiungere (" + scarti + " scartate o già presenti)."; return; }
+    $("btn-tv-add").disabled = true;
+    try {
+      var ref = S.db.doc("corpus/tv-reali");
+      var snap = await ref.get();
+      var cur = snap.exists ? (snap.data().items || []) : [];
+      await ref.set({ label: "Viste in TV", authentic: true, items: cur.concat(clean), updated: Date.now() });
+      clean.forEach(function (it) {
+        S.corpus.push({ t: it.t, cat: "tv-reali", label: "Viste in TV", tv: true, d: it.d, m: it.m });
+      });
+      $("tv-text").value = "";
+      out.textContent = "Aggiunte " + clean.length + " frasi" + (scarti ? " (" + scarti + " scartate)" : "") + ".";
+      renderArchive();
+      renderAll();
+    } catch (e) {
+      out.textContent = "Salvataggio non riuscito (" + ((e && e.code) || "errore") + ").";
+    } finally { $("btn-tv-add").disabled = false; }
+  }
+
+  async function toggleOnlyTV(v) {
+    S.settings.onlyTV = v;
+    if (S.db) { try { await S.db.doc("settings/app").set(S.settings); } catch (e) { } }
+    renderArchive();
+  }
+
+  function gotoTab(name) {
+    var btns = document.querySelectorAll("nav.tabs button");
+    Array.prototype.forEach.call(btns, function (b) {
+      if (b.dataset.v === name) b.click();
+    });
+  }
+
   /* ══════════════════════════════════════════════════════════
      REGOLE (ripetizione spaziata)
      ══════════════════════════════════════════════════════════ */
@@ -1800,6 +2095,8 @@
     $("modal-close").onclick = closeModal;
     $("vowel-close").onclick = function () { $("vowel-modal").classList.remove("on"); };
     $("btn-coach").onclick = askCoach;
+    $("btn-tv-add").onclick = importTV;
+    $("tv-only").onchange = function () { toggleOnlyTV(this.checked); };
     $("btn-gen").onclick = generatePuzzles;
 
     var tabs = document.querySelectorAll("nav.tabs button");
@@ -1809,13 +2106,17 @@
         Array.prototype.forEach.call(document.querySelectorAll(".view"), function (v) {
           v.classList.toggle("on", v.id === "view-" + b.dataset.v);
         });
+        if (b.dataset.v === "oggi") renderToday();
         if (b.dataset.v === "stats") renderStats();
         if (b.dataset.v === "regole") renderRules();
+        if (b.dataset.v === "archivio") renderArchive();
       };
     });
   }
 
   function renderAll() {
+    renderToday();
+    renderArchive();
     renderGame();
     renderDrills();
     renderStats();

@@ -15,15 +15,22 @@
   </header>
 
   <nav class="tabs" role="tablist">
-    <button data-v="gioca" aria-selected="true">Partita</button>
+    <button data-v="oggi" aria-selected="true">Oggi</button>
+    <button data-v="gioca" aria-selected="false">Partita</button>
     <button data-v="allenamento" aria-selected="false">Allenamento</button>
     <button data-v="stats" aria-selected="false">Statistiche</button>
     <button data-v="regole" aria-selected="false">Regole</button>
+    <button data-v="archivio" aria-selected="false">Archivio TV</button>
     <button data-v="coach" aria-selected="false">Coach</button>
   </nav>
 
+  <!-- ══ OGGI ══ -->
+  <section class="view on" id="view-oggi">
+    <div id="today-host"></div>
+  </section>
+
   <!-- ══ PARTITA ══ -->
-  <section class="view on" id="view-gioca">
+  <section class="view" id="view-gioca">
     <div class="sec-head">
       <p class="eyebrow" id="manche-num">Manche 1 / 5</p>
       <h2 id="manche-name">Manche classica</h2>
@@ -126,6 +133,43 @@
       <p id="rules-count">—</p>
     </div>
     <div id="rules-host"></div>
+  </section>
+
+  <!-- ══ ARCHIVIO TV ══ -->
+  <section class="view" id="view-archivio">
+    <div class="sec-head">
+      <p class="eyebrow">Frasi vere</p>
+      <h2>Archivio TV</h2>
+      <p>Un archivio pubblico dei tabelloni andati in onda non esiste: questo lo costruisci tu, puntata per puntata. Guarda la puntata, metti in pausa sul tabellone completo, incolla qui le frasi — una per riga.</p>
+    </div>
+
+    <div class="row">
+      <label class="fld">Data puntata
+        <input type="date" id="tv-date">
+      </label>
+      <label class="fld">Manche (facoltativo)
+        <input type="text" id="tv-manche" placeholder="es. Triplete" style="min-width:160px">
+      </label>
+    </div>
+
+    <textarea id="tv-text" rows="7" placeholder="UNA FRASE PER RIGA&#10;CHI DORME NON PIGLIA PESCI&#10;LA LOCANDA DI SAMIRA"></textarea>
+
+    <div class="row">
+      <button class="btn primary" id="btn-tv-add">Aggiungi all'archivio</button>
+      <span class="mono" id="tv-out" style="font-size:.85rem;color:var(--ink-faint)"></span>
+    </div>
+
+    <hr class="hr">
+
+    <div>
+      <h3 class="d" id="tv-count">Archivio ancora vuoto</h3>
+      <label class="check">
+        <input type="checkbox" id="tv-only">
+        <span>Gioca solo con le frasi viste in TV</span>
+      </label>
+      <p class="mono" id="tv-only-note" style="font-size:.8rem;color:var(--ink-faint);margin:.3em 0 1em"></p>
+      <div id="tv-list"></div>
+    </div>
   </section>
 
   <!-- ══ COACH ══ -->

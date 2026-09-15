@@ -18,3 +18,9 @@ Se una decisione ne supera un'altra, si aggiunge una voce nuova con `[supersedes
 ## 2026-09-14 — Ruota Lab si gioca interamente da tastiera (lettere = chiami o compri, Spazio = giri, Invio = campo soluzione, Esc = esci dal campo) e non impedisce di richiamare una lettera già chiamata: è un errore vero, punito come in TV e registrato come lettera_ripetuta [supersedes: 2026-09-14 input a click sulla tastiera a schermo]
 
 ## 2026-09-14 — Non esiste un archivio pubblico delle frasi andate in onda a La Ruota della Fortuna: l'archivio va costruito a mano dalle puntate su Mediaset Infinity, e le frasi trascritte andranno in una categoria separata `tv-reali` marcata come autentica
+
+## 2026-09-15 — Ruota Lab si apre sulla scheda "Oggi" che prescrive da sola tre blocchi da circa dieci minuti, scelti con una regola deterministica sui KPI e sul profilo degli errori, e li avvia in sequenza senza passare dal menu
+
+## 2026-09-15 — L'allenamento è un rituale serale: evento Google Calendar ricorrente alle 21:30 con promemoria a 10 minuti e all'ora esatta, che porta il link dell'app su telefono e computer
+
+## 2026-09-15 — Le frasi realmente andate in onda si raccolgono a mano nella scheda Archivio TV di Ruota Lab e vivono in corpus/tv-reali marcate come autentiche, separate dalle generate; sopra le 20 frasi si può giocare solo con quelle

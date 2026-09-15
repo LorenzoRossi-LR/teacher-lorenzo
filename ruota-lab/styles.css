@@ -229,3 +229,42 @@ select,input[type=number]{border:1px solid var(--rule);background:var(--panel);c
 
 .kbhint{font-size:.76rem;color:var(--ink-faint);margin:0 0 10px;line-height:1.45}
 .kbhint b{color:var(--ink-soft)}
+
+/* ── Oggi ─────────────────────────────────────────────── */
+.today-head{display:flex;align-items:flex-start;gap:18px;flex-wrap:wrap}
+.today-head>div:first-child{flex:1;min-width:220px}
+.today-head h2{margin:.1em 0 0;font-size:clamp(1.5rem,4vw,2.1rem)}
+.streak-box{display:flex;flex-direction:column;align-items:center;border:1px solid var(--rule);background:var(--panel);padding:8px 16px}
+.streak-box b{font-family:var(--f-mono);font-size:1.8rem;line-height:1;font-variant-numeric:tabular-nums}
+.streak-box span{font-size:.72rem;color:var(--ink-faint);letter-spacing:.04em}
+.streak{display:flex;gap:4px;margin:14px 0 4px}
+.sday{width:34px;height:30px;display:grid;place-items:center;border:1px solid var(--rule);background:var(--panel);
+  font-family:var(--f-mono);font-size:.72rem;color:var(--ink-faint)}
+.sday.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.lead{color:var(--ink-soft);max-width:62ch;margin:10px 0 4px}
+.blocks{display:flex;flex-direction:column;margin:8px 0 4px}
+.block{display:grid;grid-template-columns:38px 1fr auto;gap:14px;align-items:center;
+  padding-block:14px;border-top:1px solid var(--rule-soft)}
+.block:first-child{border-top:1px solid var(--ink)}
+.block:last-child{border-bottom:1px solid var(--rule-soft)}
+.bnum{font-family:var(--f-display);font-size:1.6rem;font-weight:700;color:var(--accent);line-height:1;text-align:center}
+.bbody h3{margin:0;font-size:1.1rem}
+.bbody p{margin:2px 0 0;font-size:.92rem;color:var(--ink-soft)}
+.bmeta{font-size:.74rem;color:var(--ink-faint);letter-spacing:.05em;margin-top:3px}
+.btn.big{padding:13px 22px;font-size:1.12rem;align-self:flex-start;margin-top:14px}
+.extras{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+@media (max-width:540px){
+  .block{grid-template-columns:30px 1fr;gap:10px}
+  .block>.btn{grid-column:2;justify-self:start}
+  .btn.big{width:100%;text-align:center}
+}
+
+/* ── Archivio TV ──────────────────────────────────────── */
+textarea#tv-text{width:100%;border:1px solid var(--rule);background:var(--panel);color:var(--ink);
+  padding:11px 13px;font-family:var(--f-mono);font-size:.92rem;line-height:1.6;border-radius:2px;resize:vertical;
+  text-transform:uppercase}
+input[type=date],input[type=text]{border:1px solid var(--rule);background:var(--panel);color:var(--ink);
+  padding:7px 9px;font:inherit;font-size:.95rem;border-radius:2px}
+label.check{display:flex;align-items:center;gap:8px;font-size:.95rem;cursor:pointer}
+label.check input{width:16px;height:16px;accent-color:var(--accent)}
+.sday.today{border-color:var(--ink);border-width:2px}

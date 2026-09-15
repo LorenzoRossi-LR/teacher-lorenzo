@@ -5,7 +5,7 @@ edizione con Gerry Scotti): come candidarsi, come allenarsi, e il trainer softwa
 costruito per farlo. **Questo file è la fonte di verità**: se una chat si azzera o viene
 compattata, si riparte da qui.
 
-Ultimo aggiornamento: **2026-09-14**
+Ultimo aggiornamento: **2026-09-15**
 
 ---
 
@@ -18,6 +18,7 @@ Ultimo aggiornamento: **2026-09-14**
 | Sorgenti del trainer | `ruota-lab/` in questo repo |
 | Corpus iniziale (390 frasi) | `ruota-lab/seed/*.json` |
 | Routine settimanale | trigger `trig_01CTXc8v9cFvUQCH6VTxfnKS`, lunedì 06:00 (04:00 UTC) |
+| Promemoria serale | evento Google Calendar ricorrente, ogni giorno 21:30–21:45 (Europe/Rome), id `4738j6at75qogmsdf02llrtolk` |
 | Branch di lavoro | `claude/ruota-fortuna-partecipazione-tkb7up` |
 
 > L'URL dell'artifact è la **chiave del database**: senza quello, in una nuova chat
@@ -132,7 +133,24 @@ Artifact multi-file pubblicato su claude.ai, con capacità `db` (database) e `sa
 policy di sicurezza degli artifact blocca ogni chiamata di rete in uscita. La pagina usa
 quindi Claude come motore interno (capacità `sample`, a carico dell'account di chi apre).
 
+**Il rituale serale (la parte che tiene in piedi tutto)**
+Ogni sera alle 21:30 un evento di calendario con promemoria (10 minuti prima e all'ora esatta)
+porta il link dell'app. Si apre sulla scheda **Oggi**, che mostra già la sessione pronta:
+tre blocchi da circa dieci minuti scelti automaticamente dai propri numeri, un pulsante
+"Inizia la sessione" e si va in fila da un esercizio all'altro senza tornare al menu.
+In alto la striscia dei sette giorni e il contatore dei giorni di fila.
+
+La prescrizione è deterministica (nessuna attesa di un modello): assegna una priorità a ogni
+esercizio in base a soglia media, precisione al pulsante, percentuale di finali completati,
+caselle per apertura, lettere buttate a vuoto e risultati del Testacoda; toglie punti a ciò
+che è stato fatto il giorno prima, ordina e prende i primi tre. La sessione finita viene
+registrata in `sessions/log` e alimenta la striscia della costanza.
+
 **Contenuti**
+- **Oggi**: prescrizione del giorno, striscia della costanza, avvio della sessione in sequenza.
+- **Archivio TV**: incolli le frasi trascritte dalle puntate (una per riga, con data e manche
+  facoltative); vengono ripulite, deduplicate e salvate in `corpus/tv-reali` marcate come
+  autentiche. Sopra le 20 frasi si può attivare "gioca solo con le frasi viste in TV".
 - **Partita**: 6 manche — classica, tematica, **CruciRuota** (4 frasi da 1.000 €),
   tematica, **Triplete** (1.000/2.000/3.000, bonus 10.000), **Ultimo round** a valore
   fisso. Due avversari simulati (Nadia, Rocco) con parametro di bravura. Se chiudi da
@@ -190,6 +208,10 @@ Sopravvive a ripubblicazioni e sessioni. Da chat si legge con `read_db` e si scr
 | `stats/summary` | partite, vittorie, best, `kpi`, `drills`, `days`, `weeks` | pagina |
 | `mistakes/log` | `{counts:{tipo:n}, recent:[{type, at, ctx}]}` (max 120) | pagina |
 | `games/<id>` | una riga per partita conclusa | pagina |
+| `sessions/log` | `{days:{YYYY-MM-DD:{at,blocks,mins}}}` — le sessioni serali e la costanza | pagina |
+| `settings/app` | preferenze, fra cui `onlyTV` | pagina |
+| `corpus/tv-reali` | frasi trascritte dalle puntate, `authentic:true`, con data e manche | pagina (Archivio TV) |
+| `docs/dossier`, `docs/decisions` | copia di sicurezza di questo file e del registro decisioni | chat |
 
 Categorie del corpus: `modi-di-dire, citazioni, film, musica, personaggi, luoghi, cucina,
 animali, sport-scienza, quotidiano` — 390 frasi uniche al seeding del 14/09/2026.
@@ -253,7 +275,7 @@ dalle generate.
 
 ## 9. Cosa manca / prossimi passi
 
-- [ ] Sezione "Archivio TV" per le frasi trascritte dalle puntate (categoria `tv-reali`).
+- [x] Sezione "Archivio TV" per le frasi trascritte dalle puntate (categoria `tv-reali`).
 - [ ] Manche Express e ruota del tempo dentro la partita.
 - [ ] Avversari più realistici (leggono lo stato del tabellone, non solo la percentuale).
 - [ ] Audio/effetti sonori.
@@ -277,3 +299,9 @@ dalle generate.
 ## 2026-09-14 — Ogni lunedì alle 06:00 una Routine rifornisce il corpus con 60 frasi nuove sulle tre categorie più povere, senza toccare statistiche, errori, regole e partite
 
 ## 2026-09-14 — Ruota Lab si gioca interamente da tastiera (lettere = chiami/compri, Spazio = giri, Invio = soluzione, Esc = esci dal campo) e non impedisce di richiamare una lettera già chiamata: è un errore vero, punito come in TV e registrato come `lettera_ripetuta` [supersedes: 2026-09-14 input a click sulla tastiera a schermo]
+
+## 2026-09-15 — L'app si apre sulla scheda "Oggi" che prescrive da sola tre blocchi da circa dieci minuti, scelti con una regola deterministica sui KPI e sul profilo degli errori, con avvio in sequenza senza passare dal menu
+
+## 2026-09-15 — Il rituale è serale: un evento Google Calendar ricorrente alle 21:30 con promemoria a 10 minuti e all'ora esatta porta il link dell'app su telefono e computer
+
+## 2026-09-15 — Le frasi realmente andate in onda si raccolgono a mano nella scheda Archivio TV e vivono in `corpus/tv-reali` marcate come autentiche, separate da quelle generate; sopra le 20 frasi si può giocare solo con quelle
