@@ -5,7 +5,7 @@ edizione con Gerry Scotti): come candidarsi, come allenarsi, e il trainer softwa
 costruito per farlo. **Questo file è la fonte di verità**: se una chat si azzera o viene
 compattata, si riparte da qui.
 
-Ultimo aggiornamento: **2026-09-16**
+Ultimo aggiornamento: **2026-09-23**
 
 ---
 
@@ -146,6 +146,33 @@ caselle per apertura, lettere buttate a vuoto e risultati del Testacoda; toglie 
 che è stato fatto il giorno prima, ordina e prende i primi tre. La sessione finita viene
 registrata in `sessions/log` e alimenta la striscia della costanza.
 
+**Modalità salotto (multigiocatore locale)**
+Nella scheda Partita si sceglie fra *Allenamento* (tu e due avversari simulati) e *Salotto*
+a due o tre giocatori umani, con i nomi. Si gioca **sulla stessa tastiera, a turno**: una riga
+sopra i comandi dice a chi tocca, e nelle manche a pulsante ogni giocatore ha il suo tasto
+(**1**, **2**, **3**). Le partite in salotto **non toccano statistiche, KPI e profilo errori**
+(il flag `LOGGING` è falso per tutta la partita): finiscono invece in `versus/log`, che tiene
+il conto delle vittorie testa a testa, mostrato sopra la partita.
+
+**Perché non è multigiocatore in rete.** Un artifact che dichiara la capacità `db` è
+*organization-internal*: non è condivisibile pubblicamente e chiunque lo apra deve essere
+autenticato e nell'organizzazione del proprietario. Quindi due account personali distinti
+(tu e un'altra persona) non possono aprire la stessa pagina: per giocare da due divani
+servirebbe una vera app ospitata (per esempio su Vercel) con un backend e un login proprio.
+La capacità `room` esiste e darebbe presenza e eventi in tempo reale, ma vale solo fra
+viewer della stessa organizzazione: non aggira il vincolo.
+
+**Irrobustimento (2026-09-23)**
+- Ogni testo di provenienza esterna (nomi dei giocatori, frasi del corpus, contenuto del
+  database) viene **escapizzato** prima di finire in `innerHTML`: registro di gioco ed esiti
+  degli esercizi erano l'unico punto di iniezione HTML.
+- I nomi passano da `cleanName()`: niente caratteri di controllo, massimo 24 caratteri.
+- Le frasi caricate dal database sono validate (`validPhrase`): solo lettere, spazi,
+  apostrofi e vocali accentate maiuscole, 4–60 caratteri; le altre vengono ignorate.
+- Import dell'Archivio TV limitato a 200 righe per volta e 2000 frasi in totale.
+- Nessun segreto nel codice, nessuna chiamata di rete in uscita (la CSP degli artifact la
+  blocca comunque), nessun uso di `localStorage`.
+
 **Contenuti**
 - **Oggi**: prescrizione del giorno, striscia della costanza, avvio della sessione in sequenza.
 - **Archivio TV**: incolli le frasi trascritte dalle puntate (una per riga, con data e manche
@@ -209,7 +236,8 @@ Sopravvive a ripubblicazioni e sessioni. Da chat si legge con `read_db` e si scr
 | `mistakes/log` | `{counts:{tipo:n}, recent:[{type, at, ctx}]}` (max 120) | pagina |
 | `games/<id>` | una riga per partita conclusa | pagina |
 | `sessions/log` | `{days:{YYYY-MM-DD:{at,blocks,mins}}}` — le sessioni serali e la costanza | pagina |
-| `settings/app` | preferenze, fra cui `onlyTV` | pagina |
+| `settings/app` | preferenze: `onlyTV`, `setup` (modalità e nomi dei giocatori) | pagina |
+| `versus/log` | `{tally:{nome:vittorie}, matches:[…]}` — le sfide in salotto | pagina |
 | `corpus/tv-reali` | frasi trascritte dalle puntate, `authentic:true`, con data e manche | pagina (Archivio TV) |
 | `docs/dossier`, `docs/decisions` | copia di sicurezza di questo file e del registro decisioni | chat |
 
@@ -307,3 +335,9 @@ dalle generate.
 ## 2026-09-15 — Le frasi realmente andate in onda si raccolgono a mano nella scheda Archivio TV e vivono in `corpus/tv-reali` marcate come autentiche, separate da quelle generate; sopra le 20 frasi si può giocare solo con quelle
 
 ## 2026-09-16 — Il promemoria serale si sposta a 23:45–00:00: la sessione chiude la giornata a mezzanotte [supersedes: 2026-09-15 promemoria alle 21:30]
+
+## 2026-09-23 — Il multigiocatore è locale a turni sulla stessa tastiera (modalità salotto, 2–3 giocatori, tasti 1/2/3 nelle manche a pulsante): un artifact con database non è condivisibile fuori dall'organizzazione, quindi il gioco in rete richiederebbe un'app ospitata con login proprio
+
+## 2026-09-23 — Le partite in salotto non alimentano statistiche, KPI e profilo errori, che restano misure dell'allenamento individuale: i risultati vanno in `versus/log` come record testa a testa
+
+## 2026-09-23 — Tutto il testo di provenienza esterna viene escapizzato prima di finire in innerHTML, i nomi sono ripuliti e limitati a 24 caratteri e le frasi caricate dal database sono validate a regex

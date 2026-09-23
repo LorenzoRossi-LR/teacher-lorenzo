@@ -26,3 +26,9 @@ Se una decisione ne supera un'altra, si aggiunge una voce nuova con `[supersedes
 ## 2026-09-15 — Le frasi realmente andate in onda si raccolgono a mano nella scheda Archivio TV di Ruota Lab e vivono in corpus/tv-reali marcate come autentiche, separate dalle generate; sopra le 20 frasi si può giocare solo con quelle
 
 ## 2026-09-16 — Il promemoria serale di Ruota Lab si sposta a 23:45–00:00 (Europe/Rome): la sessione chiude la giornata a mezzanotte [supersedes: 2026-09-15 promemoria alle 21:30]
+
+## 2026-09-23 — Il multigiocatore di Ruota Lab è locale a turni sulla stessa tastiera (modalità salotto, 2–3 giocatori, tasti 1/2/3 nelle manche a pulsante), perché un artifact con database non è condivisibile fuori dall'organizzazione del proprietario
+
+## 2026-09-23 — Le partite in salotto non alimentano statistiche, KPI e profilo errori: i risultati vanno in versus/log come record testa a testa, così le misure dell'allenamento restano individuali
+
+## 2026-09-23 — Tutto il testo di provenienza esterna in Ruota Lab viene escapizzato prima di finire in innerHTML, i nomi dei giocatori sono ripuliti e limitati a 24 caratteri, le frasi caricate dal database sono validate a regex e l'import dell'Archivio TV è limitato a 200 righe per volta e 2000 frasi in totale

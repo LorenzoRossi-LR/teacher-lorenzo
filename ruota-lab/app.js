@@ -74,6 +74,21 @@
     return s.toUpperCase().split("").map(norm).join("").replace(/[^A-Z' ]/g, "").replace(/\s+/g, " ").trim();
   }
   function isLetter(c) { return /[A-Z]/.test(norm(c)); }
+  var ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+  function esc(v) {
+    return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) { return ESC_MAP[c]; });
+  }
+  function cleanName(v) {
+    return String(v == null ? "" : v)
+      .replace(/[\u0000-\u001F\u007F-\u009F]/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 24);
+  }
+  function validPhrase(t) {
+    return typeof t === "string" && /^[A-Z' \u00C0\u00C8\u00C9\u00CC\u00D2\u00D9]{4,60}$/.test(t);
+  }
+
   function el(tag, cls, txt) {
     var n = document.createElement(tag);
     if (cls) n.className = cls;
@@ -116,6 +131,7 @@
     if (!ctx) return;
     if (e.key === "Enter" && ctx.enter) { e.preventDefault(); ctx.enter(); return; }
     if (e.code === "Space" && ctx.space) { e.preventDefault(); ctx.space(); return; }
+    if (ctx.digit && /^[1-9]$/.test(e.key)) { e.preventDefault(); ctx.digit(parseInt(e.key, 10)); return; }
     var L = letterFromEvent(e);
     if (L && ctx.letter) { e.preventDefault(); ctx.letter(L); }
   }
@@ -126,14 +142,18 @@
         if (!G || G.over || G.mode === "buzz" || !cur().human) return;
         if (VOW.indexOf(L) >= 0) buyVowelKey(L); else callConsonant(L);
       },
+      digit: function (n) {
+        if (!G || G.over || G.mode !== "buzz") return;
+        humanBuzz(n - 1);
+      },
       space: function () {
         if (!G || G.over) return;
-        if (G.mode === "buzz") { humanBuzz(); return; }
+        if (G.mode === "buzz") { humanBuzz(0); return; }
         if (!$("btn-spin").disabled) doSpin();
       },
       enter: function () {
         if (!G || G.over) return;
-        if (G.mode === "buzz") { humanBuzz(); return; }
+        if (G.mode === "buzz") { humanBuzz(0); return; }
         $("solve-input").focus();
       }
     };
@@ -153,8 +173,13 @@
     rules: [],
     games: [],
     settings: { onlyTV: false },
-    sessions: {}
+    sessions: {},
+    versus: { tally: {}, matches: [] }
   };
+
+  /* quando è falso, la partita in corso non tocca statistiche ed errori
+     (modalità salotto: al tavolo c'è anche qualcun altro) */
+  var LOGGING = true;
 
   var DEFAULT_STATS = {
     games: 0, wins: 0, totalWon: 0, best: 0, lastPlayed: null,
@@ -181,6 +206,7 @@
     } else {
       badge.innerHTML = '<span class="dot ok"></span> archivio collegato';
       await loadAll();
+      applySetupUI();
       renderAll();
       if (S.corpus.length > FALLBACK.length) newGame();
     }
@@ -195,9 +221,12 @@
       snap.docs.forEach(function (d) {
         var v = d.data() || {};
         (v.items || []).forEach(function (it) {
-          if (it && it.t) out.push({
-            t: String(it.t).toUpperCase(), cat: d.id, label: v.label || d.id,
-            tv: !!v.authentic, d: it.d || "", m: it.m || ""
+          if (!it || !it.t) return;
+          var t = String(it.t).toUpperCase().replace(/\s+/g, " ").trim();
+          if (!validPhrase(t)) return;
+          out.push({
+            t: t, cat: d.id, label: cleanName(v.label || d.id) || d.id,
+            tv: !!v.authentic, d: cleanName(it.d), m: cleanName(it.m)
           });
         });
       });
@@ -229,6 +258,14 @@
     } catch (e) { }
 
     try {
+      var vs = await S.db.doc("versus/log").get();
+      if (vs.exists) {
+        var vd = vs.data() || {};
+        S.versus = { tally: vd.tally || {}, matches: Array.isArray(vd.matches) ? vd.matches : [] };
+      }
+    } catch (e) { }
+
+    try {
       var ss = await S.db.doc("sessions/log").get();
       if (ss.exists) S.sessions = ss.data().days || {};
     } catch (e) { }
@@ -251,6 +288,7 @@
   }
 
   function logMistake(type, ctx) {
+    if (!LOGGING) return;
     S.mistakes.counts[type] = (S.mistakes.counts[type] || 0) + 1;
     S.mistakes.recent.unshift({ type: type, at: new Date().toISOString(), ctx: ctx || "" });
     bumpWeek({ mistakes: 1 });
@@ -382,15 +420,49 @@
 
   var G = null;
 
-  function newGame() {
+  function currentSetup() {
+    var sel = $("mode-sel");
+    var mode = sel ? sel.value : "solo";
+    var nameAt = function (i, def) {
+      var f = $("n" + i);
+      return (f ? cleanName(f.value) : "") || def;
+    };
+    if (mode === "solo") {
+      return {
+        multi: false,
+        players: [
+          { name: nameAt(1, "Tu"), human: true },
+          { name: "Nadia", human: false, skill: 0.55 },
+          { name: "Rocco", human: false, skill: 0.45 }
+        ]
+      };
+    }
+    var n = mode === "trio" ? 3 : 2;
+    var ps = [];
+    for (var i = 1; i <= n; i++) ps.push({ name: nameAt(i, "Giocatore " + i), human: true });
+    return { multi: true, players: ps };
+  }
+
+  function saveSetup() {
+    var sel = $("mode-sel");
+    S.settings.setup = {
+      mode: sel ? sel.value : "solo",
+      names: [1, 2, 3].map(function (i) { var f = $("n" + i); return f ? cleanName(f.value) : ""; })
+    };
+    if (!S.db) return;
+    try { S.db.doc("settings/app").set(S.settings); } catch (e) { }
+  }
+
+  function newGame(cfg) {
+    cfg = cfg || currentSetup();
+    LOGGING = !cfg.multi;
     G = {
       manches: buildManches(),
       manche: 0,
-      players: [
-        { name: "Tu", human: true, round: 0, bank: 0 },
-        { name: "Nadia", human: false, skill: 0.55, round: 0, bank: 0 },
-        { name: "Rocco", human: false, skill: 0.45, round: 0, bank: 0 }
-      ],
+      multi: !!cfg.multi,
+      players: cfg.players.map(function (p) {
+        return { name: p.name, human: !!p.human, skill: p.skill || 0.5, round: 0, bank: 0 };
+      }),
       turn: 0,
       starter: 0,
       spin: null,
@@ -415,7 +487,7 @@
     G.turn = G.starter;
     G.players.forEach(function (p) { p.round = 0; });
     G.fixedValue = m.fixed ? rand([1200, 1500, 1700, 2000]) : null;
-    pushLog("— " + m.nome + " —");
+    pushLog("\u2014 " + esc(m.nome) + " \u2014");
     if (m.fixed) pushLog("Ogni lettera vale " + eur(G.fixedValue) + ".");
     renderGame();
     maybeBotTurn();
@@ -435,10 +507,45 @@
   function cur() { return G.players[G.turn]; }
 
   function nextTurn() {
-    G.turn = (G.turn + 1) % 3;
+    G.turn = (G.turn + 1) % G.players.length;
     G.spin = null; G.spun = 0; G.boughtVowel = false;
     renderGame();
     maybeBotTurn();
+  }
+
+  function renderVersus() {
+    var host = $("versus-line");
+    if (!host) return;
+    var t = (S.versus && S.versus.tally) || {};
+    var names = Object.keys(t).sort(function (a, b) { return t[b] - t[a]; });
+    host.textContent = names.length
+      ? "Testa a testa \u2014 " + names.map(function (n) { return n + " " + t[n]; }).join(" \u00b7 ")
+      : "";
+  }
+
+  function applySetupUI() {
+    var sel = $("mode-sel");
+    if (!sel) return;
+    var saved = S.settings.setup;
+    if (saved) {
+      if (saved.mode) sel.value = saved.mode;
+      (saved.names || []).forEach(function (n, i) {
+        var f = $("n" + (i + 1));
+        if (f && n) f.value = n;
+      });
+    }
+    var multi = sel.value !== "solo";
+    var n = sel.value === "trio" ? 3 : multi ? 2 : 1;
+    [1, 2, 3].forEach(function (i) {
+      var w = $("n" + i + "-wrap");
+      if (w) w.hidden = i > n;
+    });
+    var hint = $("setup-hint");
+    if (hint) {
+      hint.textContent = multi
+        ? "Stessa tastiera, a turno: la riga sopra i comandi dice a chi tocca. Nelle manche a pulsante ognuno ha il suo tasto (1, 2, 3). Le partite in due non toccano le tue statistiche di allenamento."
+        : "Tu contro due avversari simulati: questa è la modalità che alimenta statistiche ed errori.";
+    }
   }
 
   function renderGame() {
@@ -458,6 +565,11 @@
       ph.appendChild(d);
     });
 
+    var tl = $("turn-line");
+    if (tl) {
+      tl.textContent = "Tocca a " + cur().name;
+      tl.hidden = !G.multi || G.over;
+    }
     var human = cur().human && !G.over;
     var hasSpin = G.spin && typeof G.spin.v === "number";
     $("btn-spin").disabled = !human || !!hasSpin;
@@ -510,22 +622,22 @@
       if (p.human && p.round >= 1500 && ratio >= 0.5) {
         logMistake("bancarotta_evitabile", "persi " + eur(p.round) + " con il tabellone al " + pct(ratio));
       }
-      pushLog("<b>" + p.name + "</b>: BANCAROTTA, persi " + eur(p.round) + ".", "neg");
+      pushLog("<b>" + esc(p.name) + "</b>: BANCAROTTA, persi " + eur(p.round) + ".", "neg");
       p.round = 0;
       renderGame();
       await sleep(700); nextTurn(); return;
     }
     if (sec.v === "PASSA") {
-      pushLog("<b>" + p.name + "</b>: PASSA, turno all'avversario.", "neg");
+      pushLog("<b>" + esc(p.name) + "</b>: PASSA, turno all'avversario.", "neg");
       renderGame();
       await sleep(700); nextTurn(); return;
     }
     if (sec.v === "JOLLY") {
       G.spin = { v: 1000 };
-      pushLog("<b>" + p.name + "</b>: JOLLY! Vale " + eur(1000) + " e una vocale gratis.", "pos");
+      pushLog("<b>" + esc(p.name) + "</b>: JOLLY! Vale " + eur(1000) + " e una vocale gratis.", "pos");
       G.freeVowel = true;
     } else {
-      pushLog("<b>" + p.name + "</b> gira: " + eur(sec.v) + ". Chiama una consonante.");
+      pushLog("<b>" + esc(p.name) + "</b> gira: " + eur(sec.v) + ". Chiama una consonante.");
     }
     renderGame();
     if (!p.human) botCall();
@@ -553,7 +665,7 @@
       G.rev[L] = true;
       var gain = valueNow() * n;
       p.round += gain;
-      pushLog("<b>" + p.name + "</b>: " + L + " × " + n + " = " + eur(gain) + ".", "pos");
+      pushLog("<b>" + esc(p.name) + "</b>: " + esc(L) + " \u00d7 " + n + " = " + eur(gain) + ".", "pos");
       if (!G.fixedValue) G.spin = null;
       renderGame();
       flashTiles($("board"));
@@ -566,7 +678,7 @@
         }
         logMistake("lettera_a_vuoto", L + " assente in « " + G.puzzle.t + " »");
       }
-      pushLog("<b>" + p.name + "</b>: la " + L + " non c'è.", "neg");
+      pushLog("<b>" + esc(p.name) + "</b>: la " + esc(L) + " non c'\u00e8.", "neg");
       renderGame();
       setTimeout(nextTurn, 800);
     }
@@ -589,11 +701,11 @@
     var n = countOf(G.puzzle.t, L);
     if (n > 0) {
       G.rev[L] = true;
-      pushLog("<b>" + p.name + "</b> compra la " + L + " (\u00d7 " + n + ").", "pos");
+      pushLog("<b>" + esc(p.name) + "</b> compra la " + esc(L) + " (\u00d7 " + n + ").", "pos");
       renderGame();
       flashTiles($("board"));
     } else {
-      pushLog("<b>" + p.name + "</b> compra la " + L + ": non c'\u00e8.", "neg");
+      pushLog("<b>" + esc(p.name) + "</b> compra la " + esc(L) + ": non c'\u00e8.", "neg");
       if (p.human) logMistake("lettera_a_vuoto", "vocale " + L + " assente");
       renderGame();
     }
@@ -633,7 +745,7 @@
     if (ok) {
       lettersOf(G.puzzle.t).forEach(function (L) { G.rev[L] = true; });
       p.bank += p.round;
-      pushLog("<b>" + p.name + "</b> risolve: « " + G.puzzle.t + " » +" + eur(p.round), "pos");
+      pushLog("<b>" + esc(p.name) + "</b> risolve: \u00ab " + esc(G.puzzle.t) + " \u00bb +" + eur(p.round), "pos");
       if (p.human && !G.boughtVowel && G.spun >= 3) {
         logMistake("vocale_tardiva", "tre giri senza comprare una vocale");
       }
@@ -641,7 +753,7 @@
       setTimeout(endManche, 1400);
     } else {
       if (p.human) logMistake("soluzione_errata", "« " + txt.toUpperCase() + " » invece di « " + G.puzzle.t + " »");
-      pushLog("<b>" + p.name + "</b> sbaglia la soluzione.", "neg");
+      pushLog("<b>" + esc(p.name) + "</b> sbaglia la soluzione.", "neg");
       setTimeout(nextTurn, 700);
     }
   }
@@ -649,7 +761,7 @@
   function endManche() {
     G.players.forEach(function (p) { p.round = 0; });
     G.manche++;
-    G.starter = (G.starter + 1) % 3;
+    G.starter = (G.starter + 1) % G.players.length;
     if (G.manche >= G.manches.length) { endGame(); return; }
     startManche();
   }
@@ -658,7 +770,21 @@
     G.over = true;
     var best = G.players.slice().sort(function (a, b) { return b.bank - a.bank; })[0];
     var me = G.players[0];
-    pushLog("<b>Fine partita.</b> Campione: " + best.name + " con " + eur(best.bank) + ".");
+    pushLog("<b>Fine partita.</b> Campione: " + esc(best.name) + " con " + eur(best.bank) + ".");
+    if (G.multi) {
+      S.versus.tally[best.name] = (S.versus.tally[best.name] || 0) + 1;
+      S.versus.matches.unshift({
+        date: today(), winner: best.name,
+        scores: G.players.map(function (p) { return { n: p.name, b: p.bank }; })
+      });
+      if (S.versus.matches.length > 50) S.versus.matches.length = 50;
+      if (S.db) { try { await S.db.doc("versus/log").set(S.versus); } catch (e) { } }
+      renderVersus();
+      renderGame();
+      setTimeout(function () { startFinale(best.bank); }, 900);
+      return;
+    }
+
     S.stats.games++;
     if (best.human) S.stats.wins++;
     S.stats.totalWon += me.bank;
@@ -681,7 +807,7 @@
     if (best.human) {
       setTimeout(function () { startFinale(me.bank); }, 900);
     } else {
-      pushLog("Niente finale: il campione è " + best.name + ". Riprova.");
+      pushLog("Niente finale: il campione \u00e8 " + esc(best.name) + ". Riprova.");
       $("btn-newgame").focus();
     }
   }
@@ -704,7 +830,7 @@
         var L = fv.sort(function (a, b) { return countOf(G.puzzle.t, b) - countOf(G.puzzle.t, a); })[0];
         G.used[L] = true; p.round -= VOWEL_COST;
         var n = countOf(G.puzzle.t, L);
-        if (n > 0) { G.rev[L] = true; pushLog("<b>" + p.name + "</b> compra la " + L + "."); }
+        if (n > 0) { G.rev[L] = true; pushLog("<b>" + esc(p.name) + "</b> compra la " + esc(L) + "."); }
         renderGame();
         setTimeout(botTurn, 900);
         return;
@@ -901,7 +1027,7 @@
       b.appendChild(line);
     });
     if (!won) logMistake("finale_incompleto", F.done + "/3 tabelloni");
-    recordDrill("finale", won, Math.max(0, Date.now() - F.t0), { finaleOk: won ? 1 : 0, finaleN: 1 });
+    if (LOGGING) recordDrill("finale", won, Math.max(0, Date.now() - F.t0), { finaleOk: won ? 1 : 0, finaleN: 1 });
     if (SESSION && SESSION.active) {
       var nx2 = el("button", "btn primary",
         SESSION.i < SESSION.queue.length - 1 ? "Blocco successivo \u2192" : "Chiudi la sessione");
@@ -1004,7 +1130,7 @@
       renderBoard(bd, p, rev, "reveal");
       out.innerHTML = ok
         ? "<b>Corretta</b> con il " + pct(ratio) + " scoperto in " + (ms / 1000).toFixed(1) + " s."
-        : "<b>Sbagliata.</b> Era « " + p.t + " ».";
+        : "<b>Sbagliata.</b> Era \u00ab " + esc(p.t) + " \u00bb.";
       if (!ok) logMistake("soluzione_errata", "D1 · « " + inp.value.toUpperCase() + " »");
       recordDrill("soglia", ok, ms, ok ? { sogliaSum: ratio, sogliaN: 1 } : null);
       out.appendChild(again(drillSoglia));
@@ -1036,7 +1162,7 @@
       if (ok || tries >= 3) {
         var ms = Date.now() - t0;
         renderBoard(bd, p, {}, "reveal");
-        out.innerHTML = ok ? "<b>Presa</b> in " + (ms / 1000).toFixed(1) + " s." : "<b>Era</b> « " + p.t + " ».";
+        out.innerHTML = ok ? "<b>Presa</b> in " + (ms / 1000).toFixed(1) + " s." : "<b>Era</b> \u00ab " + esc(p.t) + " \u00bb.";
         if (!ok) logMistake("soluzione_errata", "D2 · " + p.t);
         recordDrill("testacoda", ok, ms);
         sub.disabled = true; inp.disabled = true;
@@ -1105,7 +1231,7 @@
       if (fin) return;
       fin = true; clearInterval(iv);
       renderBoard(bd, p, rev, "reveal");
-      out.innerHTML = ok ? "<b>Risolta</b> con " + holes + " lettere a vuoto." : "<b>Era</b> « " + p.t + " » — " + holes + " buchi.";
+      out.innerHTML = ok ? "<b>Risolta</b> con " + holes + " lettere a vuoto." : "<b>Era</b> \u00ab " + esc(p.t) + " \u00bb \u2014 " + holes + " buchi.";
       if (!ok) logMistake("tempo_scaduto", "D3 · " + p.label);
       recordDrill("rubasecondi", ok, 45000, null);
       out.appendChild(again(drillRuba));
@@ -1145,7 +1271,7 @@
       if (fin || buzzed) return;
       fin = true;
       renderBoard(bd, p, rev, "reveal");
-      out.innerHTML = "<b>Ti ha battuto sul pulsante.</b> Era « " + p.t + " ».";
+      out.innerHTML = "<b>Ti ha battuto sul pulsante.</b> Era \u00ab " + esc(p.t) + " \u00bb.";
       recordDrill("pulsante", false, Date.now() - t0, { buzzN: 1 });
       out.appendChild(again(drillPulsante));
     }
@@ -1165,7 +1291,7 @@
       renderBoard(bd, p, rev, "reveal");
       out.innerHTML = ok
         ? "<b>Presa</b> al " + pct(ratio) + " scoperto."
-        : "<b>Prenotato a vuoto.</b> Era « " + p.t + " ».";
+        : "<b>Prenotato a vuoto.</b> Era \u00ab " + esc(p.t) + " \u00bb.";
       if (!ok) logMistake("soluzione_errata", "D4 · prenotazione senza frase");
       recordDrill("pulsante", ok, Date.now() - t0, { buzzOk: ok ? 1 : 0, buzzN: 1 });
       out.appendChild(again(drillPulsante));
@@ -1232,7 +1358,7 @@
       picks.forEach(function (L) { tiles += countOf(p.t, L); });
       renderBoard(bd, p, rev, "play");
       out.innerHTML = "Le tue lettere hanno scoperto <b>" + tiles + " caselle</b>" +
-        (picks.length ? " (" + picks.join(" ") + ")" : "") + ". Frase: « " + p.t + " ».";
+        (picks.length ? " (" + esc(picks.join(" ")) + ")" : "") + ". Frase: \u00ab " + esc(p.t) + " \u00bb.";
       if (tiles < 6) logMistake("griglia_debole", picks.join(" ") + " → " + tiles + " caselle");
       recordDrill("griglia", tiles >= 9, 8000, { grigliaSum: tiles, grigliaN: 1 });
       out.appendChild(again(drillGriglia));
@@ -1402,8 +1528,8 @@
     B.rev[B.letters[B.li++]] = true;
     renderBuzz();
     var ratio = revealedRatio(B.puz.t, B.rev);
-    for (var i = 1; i < 3; i++) {
-      if (!B.locked[i] && ratio >= B.botAt[i]) { botBuzz(i, ratio); return; }
+    for (var i = 0; i < G.players.length; i++) {
+      if (!G.players[i].human && !B.locked[i] && ratio >= B.botAt[i]) { botBuzz(i, ratio); return; }
     }
   }
 
@@ -1411,7 +1537,7 @@
     stopBuzzTimer();
     B.answering = i;
     var p = G.players[i];
-    pushLog("<b>" + p.name + "</b> si prenota…");
+    pushLog("<b>" + esc(p.name) + "</b> si prenota\u2026");
     renderBuzz();
     setTimeout(function () {
       if (!B) return;
@@ -1420,17 +1546,20 @@
       else {
         B.locked[i] = true;
         B.answering = null;
-        pushLog("<b>" + p.name + "</b> sbaglia ed è fuori da questa frase.", "neg");
+        pushLog("<b>" + esc(p.name) + "</b> sbaglia ed \u00e8 fuori da questa frase.", "neg");
         renderBuzz();
         B.timer = setInterval(tickBuzz, 750);
       }
     }, 1200);
   }
 
-  function humanBuzz() {
-    if (!B || B.answering !== null || B.locked[0]) return;
+  function humanBuzz(idx) {
+    if (!B || B.answering !== null) return;
+    if (typeof idx !== "number") idx = 0;
+    var who = G.players[idx];
+    if (!who || !who.human || B.locked[idx]) return;
     stopBuzzTimer();
-    B.answering = 0;
+    B.answering = idx;
     renderBuzz();
     $("buzz-answer").hidden = false;
     $("buzz-input").value = "";
@@ -1438,14 +1567,15 @@
   }
 
   function submitBuzz() {
-    if (!B || B.answering !== 0) return;
+    if (!B || typeof B.answering !== "number") return;
+    var who = B.answering;
     var v = $("buzz-input").value;
     $("buzz-answer").hidden = true;
-    if (normStr(v) === normStr(B.puz.t)) { awardBuzz(0); return; }
+    if (normStr(v) === normStr(B.puz.t)) { awardBuzz(who); return; }
     logMistake("soluzione_errata", B.m.nome + " · « " + v.toUpperCase() + " » invece di « " + B.puz.t + " »");
-    B.locked[0] = true;
+    B.locked[who] = true;
     B.answering = null;
-    pushLog("<b>Tu</b>: prenotazione a vuoto, sei fuori da questa frase.", "neg");
+    pushLog("<b>" + esc(G.players[0].name) + "</b>: prenotazione a vuoto, fuori da questa frase.", "neg");
     renderBuzz();
     B.timer = setInterval(tickBuzz, 750);
   }
@@ -1456,7 +1586,7 @@
     B.taken[i] = (B.taken[i] || 0) + 1;
     lettersOf(B.puz.t).forEach(function (L) { B.rev[L] = true; });
     B.answering = "done";
-    pushLog("<b>" + p.name + "</b> prende « " + B.puz.t + " » +" + eur(v), "pos");
+    pushLog("<b>" + esc(p.name) + "</b> prende \u00ab " + esc(B.puz.t) + " \u00bb +" + eur(v), "pos");
     renderBuzz();
     setTimeout(function () { if (!B) return; B.idx++; nextBuzzPhrase(); }, 1500);
   }
@@ -1464,7 +1594,7 @@
   function missedPhrase() {
     lettersOf(B.puz.t).forEach(function (L) { B.rev[L] = true; });
     B.answering = "done";
-    pushLog("Nessuno l'ha presa: « " + B.puz.t + " ».", "neg");
+    pushLog("Nessuno l'ha presa: \u00ab " + esc(B.puz.t) + " \u00bb.", "neg");
     renderBuzz();
     setTimeout(function () { if (!B) return; B.idx++; nextBuzzPhrase(); }, 1500);
   }
@@ -1472,10 +1602,10 @@
   function finishBuzz() {
     stopBuzzTimer();
     if (B.m.kind === "triplete") {
-      for (var i = 0; i < 3; i++) {
+      for (var i = 0; i < G.players.length; i++) {
         if (B.taken[i] === 3) {
           G.players[i].bank += 10000;
-          pushLog("<b>" + G.players[i].name + "</b> fa il TRIPLETE: +" + eur(10000) + "!", "pos");
+          pushLog("<b>" + esc(G.players[i].name) + "</b> fa il TRIPLETE: +" + eur(10000) + "!", "pos");
         }
       }
     }
@@ -1502,9 +1632,20 @@
 
     $("buzz-count").textContent = "Frase " + Math.min(B.idx + 1, B.list.length) + " / " + B.list.length;
     $("buzz-value").textContent = eur(buzzValue());
-    $("btn-buzz").disabled = B.answering !== null || !!B.locked[0];
-    $("btn-buzz").textContent = B.locked[0] ? "Sei fuori da questa frase"
-      : B.answering === 0 ? "Rispondi!" : "PRENOTATI  ·  barra spaziatrice";
+    var bh = $("buzz-buttons");
+    bh.innerHTML = "";
+    G.players.forEach(function (p, i) {
+      if (!p.human) return;
+      var btn = el("button", "btn primary", "");
+      btn.style.flex = "1";
+      btn.disabled = B.answering !== null || !!B.locked[i];
+      btn.textContent = B.locked[i] ? p.name + ": fuori da questa frase"
+        : B.answering === i ? p.name + ": rispondi!"
+        : G.multi ? (i + 1) + " — " + p.name
+        : "PRENOTATI · barra spaziatrice";
+      btn.onclick = function () { humanBuzz(i); };
+      bh.appendChild(btn);
+    });
     $("meta-info").textContent = "scoperto " + pct(revealedRatio(B.puz.t, B.rev)) + " · " + m.nome;
   }
 
@@ -1853,7 +1994,7 @@
     var have = {};
     S.corpus.forEach(function (p) { have[p.t] = true; });
     var clean = [], scarti = 0;
-    raw.split("\n").forEach(function (line) {
+    raw.split("\n").slice(0, 200).forEach(function (line) {
       var t = line.toUpperCase().replace(/[’`]/g, "'").replace(/[^A-Z' ÀÈÉÌÒÙ]/g, "").replace(/\s+/g, " ").trim();
       if (!t) return;
       if (t.length < 6 || t.length > 48 || have[t]) { scarti++; return; }
@@ -1866,7 +2007,9 @@
       var ref = S.db.doc("corpus/tv-reali");
       var snap = await ref.get();
       var cur = snap.exists ? (snap.data().items || []) : [];
-      await ref.set({ label: "Viste in TV", authentic: true, items: cur.concat(clean), updated: Date.now() });
+      var merged = cur.concat(clean);
+      if (merged.length > 2000) { out.textContent = "Archivio al limite (2000 frasi): cancella qualcosa prima di aggiungere."; return; }
+      await ref.set({ label: "Viste in TV", authentic: true, items: merged, updated: Date.now() });
       clean.forEach(function (it) {
         S.corpus.push({ t: it.t, cat: "tv-reali", label: "Viste in TV", tv: true, d: it.d, m: it.m });
       });
@@ -2041,6 +2184,7 @@
      ══════════════════════════════════════════════════════════ */
 
   function buildUI() {
+    applySetupUI();
     // ruota
     var w = $("wheel");
     var grad = [];
@@ -2081,14 +2225,25 @@
     };
     $("solve-input").onkeydown = function (e) { if (e.key === "Enter") $("btn-solve").click(); };
     $("btn-newgame").onclick = function () { B = null; newGame(); renderAll(); };
-    $("btn-buzz").onclick = humanBuzz;
+    $("mode-sel").onchange = function () { applySetupUI(); saveSetup(); };
+    [1, 2, 3].forEach(function (i) {
+      var f = $("n" + i);
+      if (f) f.onchange = saveSetup;
+    });
+    $("btn-apply-setup").onclick = function () {
+      saveSetup();
+      B = null;
+      newGame();
+      renderAll();
+      gotoTab("gioca");
+    };
     $("btn-buzz-send").onclick = submitBuzz;
     $("buzz-input").onkeydown = function (e) { if (e.key === "Enter") submitBuzz(); };
     document.addEventListener("keydown", globalKeys);
     setKeys(gameKeys());
     $("btn-skip").onclick = function () {
       lettersOf(G.puzzle.t).forEach(function (L) { G.rev[L] = true; });
-      pushLog("Tabellone svelato: « " + G.puzzle.t + " ».");
+      pushLog("Tabellone svelato: \u00ab " + esc(G.puzzle.t) + " \u00bb.");
       renderGame();
       setTimeout(endManche, 1200);
     };
@@ -2115,6 +2270,7 @@
   }
 
   function renderAll() {
+    renderVersus();
     renderToday();
     renderArchive();
     renderGame();

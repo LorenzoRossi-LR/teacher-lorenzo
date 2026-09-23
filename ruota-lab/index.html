@@ -31,6 +31,30 @@
 
   <!-- ══ PARTITA ══ -->
   <section class="view" id="view-gioca">
+    <div class="setup">
+      <div class="row">
+        <label class="fld">Modalità
+          <select id="mode-sel">
+            <option value="solo">Allenamento — tu e due simulati</option>
+            <option value="duo">Salotto — due giocatori</option>
+            <option value="trio">Salotto — tre giocatori</option>
+          </select>
+        </label>
+        <label class="fld" id="n1-wrap">Giocatore 1
+          <input type="text" id="n1" maxlength="24" value="Tu" autocomplete="off">
+        </label>
+        <label class="fld" id="n2-wrap" hidden>Giocatore 2
+          <input type="text" id="n2" maxlength="24" value="Giocatore 2" autocomplete="off">
+        </label>
+        <label class="fld" id="n3-wrap" hidden>Giocatore 3
+          <input type="text" id="n3" maxlength="24" value="Giocatore 3" autocomplete="off">
+        </label>
+        <button class="btn" id="btn-apply-setup">Nuova partita</button>
+      </div>
+      <p class="mono" id="setup-hint"></p>
+      <p class="mono" id="versus-line"></p>
+    </div>
+
     <div class="sec-head">
       <p class="eyebrow" id="manche-num">Manche 1 / 5</p>
       <h2 id="manche-name">Manche classica</h2>
@@ -54,6 +78,7 @@
       </div>
 
       <div class="controls">
+        <p class="turn-line" id="turn-line" hidden></p>
         <div class="btnrow">
           <button class="btn" id="btn-vowel">Compra vocale · € 200</button>
           <button class="btn ghost sm" id="btn-skip">Svela e passa oltre</button>
@@ -74,8 +99,8 @@
             <span class="pill" id="buzz-count">Frase 1 / 4</span>
             <span class="pill warn" id="buzz-value">€ 1.000</span>
           </div>
-          <p class="kbhint mono"><b>Tastiera:</b> <b>Spazio</b> o <b>Invio</b> per prenotarti</p>
-          <button class="btn primary" id="btn-buzz" style="width:100%">PRENOTATI · barra spaziatrice</button>
+          <p class="kbhint mono"><b>Tastiera:</b> <b>Spazio</b> prenota il primo giocatore · in due o tre, <b>1</b> <b>2</b> <b>3</b> prenotano il rispettivo</p>
+          <div class="row" id="buzz-buttons"></div>
           <div class="solvebar" id="buzz-answer" hidden style="margin-top:10px">
             <input id="buzz-input" placeholder="La frase intera" autocomplete="off" spellcheck="false">
             <button class="btn primary" id="btn-buzz-send">Rispondi</button>
