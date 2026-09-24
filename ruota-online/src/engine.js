@@ -19,7 +19,25 @@ export const LIMITS = Object.freeze({
   FINAL_MS: 60_000,
   FINAL_PENALTY_MS: 3_000,
   FINAL_PICK_MS: 45_000,      // tempo massimo per scegliere le lettere del finale
+  BOT_STEP_MS: 1_800,         // pausa fra una mossa e l'altra di un bot, perché si veda cosa fa
 });
+
+// Bot: giocano sul server con le stesse regole e vedono solo ciò che vede un umano,
+// tranne quando «indovinano» — e lì la bravura è una probabilità, non una sbirciata gratis.
+//   good    probabilità di chiamare una lettera che c'è
+//   buy     propensione a comprare vocali
+//   solveAt quota di tessere scoperte oltre la quale risolve
+//   buzzAt  quota di lettere scoperte oltre la quale si prenota (± 10%)
+//   right   probabilità di rispondere giusto dopo la prenotazione
+//   final   probabilità di risolvere un tabellone del finale a ogni tentativo
+export const BOT_LEVELS = Object.freeze({
+  facile: { good: 0.45, buy: 0.25, solveAt: 0.85, buzzAt: 0.75, right: 0.75, final: 0.3 },
+  medio: { good: 0.62, buy: 0.35, solveAt: 0.72, buzzAt: 0.6, right: 0.88, final: 0.45 },
+  forte: { good: 0.8, buy: 0.45, solveAt: 0.6, buzzAt: 0.47, right: 0.95, final: 0.65 },
+});
+const BOT_NAMES = ["Ada", "Bruno", "Carla", "Dino", "Elsa", "Furio", "Gina"];
+const ID_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+const FREQ_CONS = "RNTLSCDMPVGBFZHQ".split("");
 
 const CONS = "BCDFGHJKLMNPQRSTVWXYZ".split("");
 const VOW = "AEIOU".split("");
@@ -114,14 +132,14 @@ export function createRoom({ code, now }) {
   };
 }
 
-export function addPlayer(room, { id, name, tokenHash, now }) {
+export function addPlayer(room, { id, name, tokenHash, now, bot = null }) {
   if (room.phase !== "lobby") fail("started", "La partita è già iniziata.");
   if (room.players.length >= LIMITS.MAX_PLAYERS) fail("full", "La stanza è piena (massimo 3 giocatori).");
   const lower = name.toLowerCase();
   if (room.players.some((p) => p.name.toLowerCase() === lower)) fail("name_taken", "Questo nome è già in stanza.");
-  room.players.push({ id, name, tokenHash, bank: 0, round: 0, lastSeen: now });
-  if (!room.hostId) room.hostId = id;
-  log(room, `${name} è entrato nella stanza.`);
+  room.players.push({ id, name, tokenHash, bank: 0, round: 0, lastSeen: now, ...(bot ? { bot } : {}) });
+  if (!room.hostId && !bot) room.hostId = id;
+  log(room, bot ? `${name} (bot, ${bot}) si siede al tavolo.` : `${name} è entrato nella stanza.`);
   return room;
 }
 
@@ -297,6 +315,12 @@ function startBuzzPhrase(room, rng, now) {
   b.answerUntil = 0;
   b.fullAt = 0;
   b.value = room.manches[room.mancheIdx].kind === "triplete" ? [1000, 2000, 3000][b.idx] : 1000;
+  b.botAt = {};
+  for (const q of room.players) {
+    if (q.bot) b.botAt[q.id] = BOT_LEVELS[q.bot].buzzAt + (rng.int(201) - 100) / 1000;
+  }
+  b.botAnswerAt = 0;
+  b.botRight = false;
 }
 
 function buzzRevealed(b, now) {
@@ -452,7 +476,7 @@ export function tick(room, rng, now) {
   if (room.phase === "lobby" && room.players.length > 1) {
     const host = player(room, room.hostId);
     if (!host || now - host.lastSeen > 30_000) {
-      const next = room.players.find((p) => p.id !== room.hostId && now - p.lastSeen < 15_000);
+      const next = room.players.find((p) => p.id !== room.hostId && !p.bot && now - p.lastSeen < 15_000);
       if (next) { room.hostId = next.id; log(room, `Ora la stanza la gestisce ${next.name}.`); changed = true; }
     }
   }
@@ -467,6 +491,12 @@ export function tick(room, rng, now) {
       if (room.buzz.idx >= room.buzz.list.length) finishBuzzManche(room, rng, now);
       else startBuzzPhrase(room, rng, now);
     }
+  }
+
+  if (room.phase === "wheel" && !room.show && current(room).bot && now - room.lastActionAt >= LIMITS.BOT_STEP_MS) {
+    try { botWheelStep(room, current(room), rng, now); }
+    catch (e) { if (!(e instanceof GameError)) throw e; nextTurn(room, now); }   // un bot non blocca mai il tavolo
+    changed = true;
   }
 
   if (room.phase === "wheel" && !room.show && now - room.lastActionAt > LIMITS.TURN_IDLE_MS) {
@@ -486,11 +516,18 @@ export function tick(room, rng, now) {
       const before = Object.keys(room.rev).length;
       applyBuzzReveal(room, now);
       if (Object.keys(room.rev).length !== before) changed = true;
-      if (b.fullAt && !b.answering && now - b.fullAt > LIMITS.BUZZ_TAIL_MS) {
+      try { if (botBuzzStep(room, rng, now)) changed = true; }
+      catch (e) { if (!(e instanceof GameError)) throw e; }
+      if (room.phase === "buzz" && room.buzz && !room.show && b.fullAt && !b.answering && now - b.fullAt > LIMITS.BUZZ_TAIL_MS) {
         endBuzzPhrase(room, rng, now, null);
         changed = true;
       }
     }
+  }
+
+  if (room.phase === "final" && room.final && !room.final.outcome) {
+    try { if (botFinalStep(room, rng, now)) changed = true; }
+    catch (e) { if (!(e instanceof GameError)) throw e; }
   }
 
   if (room.phase === "final" && room.final && !room.final.outcome) {
@@ -532,12 +569,25 @@ export function dispatch(room, pid, action, rng, now) {
     case "final_call": doFinalCall(room, pid, action.letter, now); break;
     case "final_solve": doFinalSolve(room, pid, action.text, now); break;
     case "kick": doKick(room, pid, action.target); break;
+    case "add_bot": doAddBot(room, pid, action.level, rng, now); break;
     case "rematch": doRematch(room, pid, now); break;
     default: fail("bad_action", "Azione sconosciuta.");
   }
   room.version++;
   room.updatedAt = now;
   return room;
+}
+
+function doAddBot(room, pid, level, rng, now) {
+  if (pid !== room.hostId) fail("not_host", "Solo chi ha creato la stanza può aggiungere bot.");
+  if (room.phase !== "lobby") fail("started", "I bot si aggiungono prima di iniziare.");
+  if (!BOT_LEVELS[level]) fail("bad_level", "Livello sconosciuto.");
+  const taken = new Set(room.players.map((p) => p.name.toLowerCase()));
+  const name = BOT_NAMES.find((n) => !taken.has(n.toLowerCase()));
+  if (!name) fail("full", "Niente più posti.");
+  // id con lo stesso formato di quelli umani; nessun token: nessuno può giocare al posto di un bot
+  const id = Array.from({ length: 16 }, () => ID_ALPHABET[rng.int(64)]).join("");
+  addPlayer(room, { id, name, tokenHash: null, now, bot: level });
 }
 
 function doKick(room, pid, target) {
@@ -547,7 +597,7 @@ function doKick(room, pid, target) {
   const p = player(room, target);
   if (!p) fail("bad_target", "Giocatore non trovato.");
   room.players = room.players.filter((x) => x.id !== target);
-  log(room, `${p.name} è stato allontanato dalla stanza.`, "neg");
+  log(room, p.bot ? `${p.name} (bot) lascia il tavolo.` : `${p.name} è stato allontanato dalla stanza.`, "neg");
 }
 
 function doRematch(room, pid, now) {
@@ -597,8 +647,8 @@ export function viewFor(room, pid, now) {
     host: room.hostId === pid,
     hostId: room.hostId,
     players: room.players.map((p) => ({
-      id: p.id, name: p.name, bank: p.bank, round: p.round,
-      online: now - p.lastSeen < 15_000,
+      id: p.id, name: p.name, bank: p.bank, round: p.round, bot: p.bot || null,
+      online: !!p.bot || now - p.lastSeen < 15_000,
     })),
     turn: room.phase === "wheel" && room.players.length ? current(room).id : null,
     manche: m && { n: room.mancheIdx + 1, of: room.manches.length, name: m.name, type: m.type },
@@ -628,4 +678,89 @@ export function viewFor(room, pid, now) {
     wheel: WHEEL_SECTORS,
     me: me ? { name: me.name } : null,
   };
+}
+
+/* ── bot ─────────────────────────────────────────────────── */
+
+const chance = (rng, p) => rng.int(1000) < p * 1000;
+
+function revealedShare(room) {
+  const tiles = room.puzzle.t.split("").filter(isLetter).map(norm);
+  return tiles.filter((L) => room.rev[L]).length / tiles.length;
+}
+
+function botConsonant(room, lv, rng) {
+  const hidden = lettersOf(room.puzzle.t).filter((L) => CONS.includes(L) && !room.rev[L]);
+  if (hidden.length && chance(rng, lv.good)) return rng.pick(hidden);
+  const unused = FREQ_CONS.filter((L) => !room.used[L]);
+  const pool = unused.length ? unused.slice(0, 6) : CONS.filter((L) => !room.used[L]);
+  return pool.length ? rng.pick(pool) : rng.pick(CONS);
+}
+
+function botVowel(room, lv, rng) {
+  const hidden = lettersOf(room.puzzle.t).filter((L) => VOW.includes(L) && !room.rev[L]);
+  if (hidden.length && chance(rng, lv.good + 0.15)) return rng.pick(hidden);
+  const unused = VOW.filter((L) => !room.used[L]);
+  return unused.length ? rng.pick(unused) : null;
+}
+
+// Una sola mossa per chiamata: chi guarda vede il bot girare, chiamare, comprare, risolvere.
+function botWheelStep(room, p, rng, now) {
+  const lv = BOT_LEVELS[p.bot];
+  const hidden = lettersOf(room.puzzle.t).filter((L) => !room.rev[L]);
+  const hidCons = hidden.filter((L) => CONS.includes(L));
+  const hidVow = hidden.filter((L) => VOW.includes(L));
+  const spun = room.spin && typeof room.spin.value === "number" && !room.spin.spent;
+  const canBuy = room.freeVowel || p.round >= LIMITS.VOWEL_COST;
+  const solve = () => doSolve(room, p.id, room.puzzle.t, rng, now);
+
+  if (spun && !room.fixedValue) return doCall(room, p.id, botConsonant(room, lv, rng), now);
+  if (!hidden.length || revealedShare(room) >= lv.solveAt) return solve();
+  if (!hidCons.length) {
+    const v = canBuy && botVowel(room, lv, rng);
+    return v ? doBuy(room, p.id, v, now) : solve();
+  }
+  if (canBuy && hidVow.length && (room.freeVowel || chance(rng, lv.buy))) {
+    const v = botVowel(room, lv, rng);
+    if (v) return doBuy(room, p.id, v, now);
+  }
+  if (room.fixedValue) return doCall(room, p.id, botConsonant(room, lv, rng), now);
+  return doSpin(room, p.id, rng, now);
+}
+
+function botBuzzStep(room, rng, now) {
+  const b = room.buzz;
+  if (b.answering) {
+    const p = player(room, b.answering);
+    if (!p || !p.bot || now < b.botAnswerAt) return false;
+    if (b.botRight) endBuzzPhrase(room, rng, now, p);
+    else { log(room, `${p.name} sbaglia ed è fuori da questa frase.`, "neg"); lockAndResume(room, p.id, rng, now); }
+    return true;
+  }
+  const share = buzzRevealed(b, now) / b.order.length;
+  const ready = room.players.filter((q) => q.bot && !b.locked.includes(q.id) && share >= (b.botAt || {})[q.id]);
+  if (!ready.length) return false;
+  const p = rng.pick(ready);
+  doBuzz(room, p.id, now);
+  b.botAnswerAt = now + 1200 + rng.int(1500);
+  b.botRight = chance(rng, BOT_LEVELS[p.bot].right);
+  return true;
+}
+
+const BOT_PICKS = [["L", "S", "C", "A"], ["S", "C", "D", "O"], ["L", "C", "M", "I"], ["S", "L", "D", "A"]];
+
+function botFinalStep(room, rng, now) {
+  const f = room.final;
+  const p = player(room, f.pid);
+  if (!p || !p.bot) return false;
+  if (!f.picks) {
+    if (now < f.pickUntil - LIMITS.FINAL_PICK_MS + 3_000) return false;
+    doFinalPick(room, p.id, rng.pick(BOT_PICKS), now);
+    f.botNextAt = now + 7_000 + rng.int(8_000);
+    return true;
+  }
+  if (now < f.botNextAt || now >= f.deadline) return false;
+  if (chance(rng, BOT_LEVELS[p.bot].final)) doFinalSolve(room, p.id, room.puzzle.t, now);
+  f.botNextAt = now + 7_000 + rng.int(8_000);
+  return true;
 }

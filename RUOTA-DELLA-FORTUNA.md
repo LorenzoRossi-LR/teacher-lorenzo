@@ -254,6 +254,11 @@ da altri). Codice in `ruota-online/`, documentazione completa in `ruota-online/R
 - **Facoltativo**: segreto `IP_SALT_SECRET` (Worker → Settings → Variables and Secrets) e un
   dominio proprio dalla scheda Domains.
 
+- **Bot** (2026-09-24): chi crea la stanza riempie i posti liberi con bot Facile / Medio /
+  Forte, oppure dalla home *Gioca contro due bot*. Giocano sul server con le stesse regole,
+  una mossa ogni 1,8 s; la bravura è una probabilità, non una sbirciata alla frase. Senza token,
+  quindi nessuno può impersonarli. Finale vinto in simulazione: ~7% / ~20% / ~67%.
+
 Anche **Ruota Lab** è ora mobile first: ruota compatta in riga col valore e il pulsante,
 schede scorrevoli, lettere più grandi, pannello modalità richiudibile.
 
@@ -391,3 +396,5 @@ dalle generate.
 ## 2026-09-24 — Il gioco è mobile first: ruota compatta (104 px) col valore accanto, tastiera a schermo e pulsante di prenotazione grande, sia in Ruota Online sia in Ruota Lab
 
 ## 2026-09-24 — Ruota Online è online su https://ruota-online.lorenx-rossi.workers.dev e si ripubblica da sola a ogni merge su main tramite Workers Builds (percorso /ruota-online); gli URL di anteprima per versione sono spenti
+
+## 2026-09-24 — In Ruota Online i posti liberi si riempiono con bot di tre livelli (Facile, Medio, Forte) che giocano sul server con le stesse regole e senza token; dalla home «Gioca contro due bot» crea la stanza con due bot medi

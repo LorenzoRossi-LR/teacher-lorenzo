@@ -42,3 +42,5 @@ Se una decisione ne supera un'altra, si aggiunge una voce nuova con `[supersedes
 ## 2026-09-24 — Il gioco è mobile first: ruota compatta da 104 px col valore accanto, tastiera a schermo e pulsante di prenotazione grande, sia in Ruota Online sia in Ruota Lab
 
 ## 2026-09-24 — Ruota Online è online su https://ruota-online.lorenx-rossi.workers.dev e si ripubblica da sola a ogni merge su main tramite Workers Builds (percorso /ruota-online); gli URL di anteprima per versione sono spenti
+
+## 2026-09-24 — In Ruota Online i posti liberi si riempiono con bot di tre livelli (Facile, Medio, Forte) che giocano sul server con le stesse regole e senza token; dalla home «Gioca contro due bot» crea la stanza con due bot medi

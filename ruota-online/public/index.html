@@ -29,6 +29,7 @@
         <input id="h-name" type="text" maxlength="20" autocomplete="nickname" autocapitalize="words" enterkeyhint="done">
       </label>
       <button class="btn primary big" id="h-create">Crea una stanza</button>
+      <button class="btn big" id="h-bots">Gioca contro due bot</button>
     </div>
 
     <div class="or"><span>oppure</span></div>
@@ -59,6 +60,12 @@
       <div class="seg" role="radiogroup" aria-label="Durata">
         <button class="seg-btn on" data-len="breve" role="radio" aria-checked="true">Breve<br><small>3 manche · 10′</small></button>
         <button class="seg-btn" data-len="completa" role="radio" aria-checked="false">Completa<br><small>6 manche · 25′</small></button>
+      </div>
+      <div class="bot-row" id="l-bots">
+        <span class="bot-label">Aggiungi un bot</span>
+        <button class="btn bot-add" data-level="facile">Facile</button>
+        <button class="btn bot-add" data-level="medio">Medio</button>
+        <button class="btn bot-add" data-level="forte">Forte</button>
       </div>
       <button class="btn primary big" id="l-start">Inizia la partita</button>
     </div>

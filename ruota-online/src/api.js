@@ -23,7 +23,8 @@ import {
 
 const LETTER_RE = /^[A-Z]$/;
 const ACTIONS = new Set(["start", "spin", "call", "buy", "solve", "buzz", "answer",
-  "final_pick", "final_call", "final_solve", "kick", "rematch"]);
+  "final_pick", "final_call", "final_solve", "kick", "rematch", "add_bot"]);
+const BOT_LEVEL_RE = /^(facile|medio|forte)$/;
 
 const json = (status, obj) => ({ status, headers: { ...API_HEADERS }, body: JSON.stringify(obj) });
 const err = (status, code, message) => json(status, { error: { code, message } });
@@ -74,6 +75,10 @@ function cleanAction(a) {
       break;
     case "start":
       out.length = a.length === "breve" ? "breve" : "completa";
+      break;
+    case "add_bot":
+      if (typeof a.level !== "string" || !BOT_LEVEL_RE.test(a.level)) return null;
+      out.level = a.level;
       break;
     case "kick":
       if (typeof a.target !== "string" || !/^[A-Za-z0-9_-]{16}$/.test(a.target)) return null;

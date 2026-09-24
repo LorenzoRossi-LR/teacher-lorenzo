@@ -317,3 +317,53 @@ test("le risposte API non si mettono in cache", async () => {
   const r = await t.call("POST", "/api/rooms", { body: { name: "Cache" } });
   assert.equal(r.headers["Cache-Control"], "no-store");
 });
+
+/* ── bot ───────────────────────────────────────────────── */
+
+test("bot: solo l'host li aggiunge, in sala d'attesa, entro i tre posti; nessun token", async () => {
+  const t = setup();
+  const a = await t.call("POST", "/api/rooms", { body: { name: "Lorenzo" } });
+  const code = a.data.code;
+  const b = await t.call("POST", `/api/rooms/${code}/join`, { body: { name: "Chiara" }, ip: "2.2.2.2" });
+  assert.equal((await act(t, code, b.data.token, { type: "add_bot", level: "medio" })).data.error.code, "not_host");
+  assert.equal((await act(t, code, a.data.token, { type: "add_bot", level: "imbattibile" })).status, 400);
+  const r = await act(t, code, a.data.token, { type: "add_bot", level: "forte" });
+  assert.equal(r.status, 200);
+  const bot = r.data.view.players.find((p) => p.bot);
+  assert.equal(bot.bot, "forte");
+  assert.match(bot.id, /^[A-Za-z0-9_-]{16}$/);
+  assert.equal((await act(t, code, a.data.token, { type: "add_bot", level: "facile" })).data.error.code, "full");
+  const room = (await t.store.get(code)).room;
+  assert.equal(room.players.find((p) => p.bot).tokenHash, null);
+  // l'host può toglierlo e il posto si libera
+  const k = await act(t, code, a.data.token, { type: "kick", target: bot.id });
+  assert.equal(k.data.view.players.length, 2);
+  await act(t, code, a.data.token, { type: "start", length: "breve" });
+  assert.equal((await act(t, code, a.data.token, { type: "add_bot", level: "medio" })).data.error.code, "started");
+});
+
+test("bot: una partita contro due bot arriva alla fine da sola, senza mai mostrare la frase", async () => {
+  for (const level of ["facile", "medio", "forte"]) {
+    const t = setup();
+    t.deps.limiter = { hit: async () => true };
+    const a = await t.call("POST", "/api/rooms", { body: { name: "Lorenzo" } });
+    const code = a.data.code;
+    await act(t, code, a.data.token, { type: "add_bot", level });
+    await act(t, code, a.data.token, { type: "add_bot", level });
+    await act(t, code, a.data.token, { type: "start", length: "breve" });
+    let v, steps = 0;
+    const phases = new Set();
+    for (; steps < 6000; steps++) {
+      t.advance(1000);
+      const g = await t.call("GET", `/api/rooms/${code}`, { token: a.data.token });
+      const secret = (await t.store.get(code)).room.puzzle.t;
+      v = g.data.view;
+      phases.add(v.phase);
+      if (v.phase === "over") break;
+      if (!v.show) assert.ok(!JSON.stringify(v).includes(secret), "frase trapelata");
+    }
+    assert.equal(v.phase, "over", `livello ${level}: partita non conclusa`);
+    assert.ok(phases.has("buzz") && phases.has("final"));
+    assert.ok(v.players.filter((p) => p.bot).some((p) => p.bank > 0), `livello ${level}: i bot non hanno vinto nulla`);
+  }
+});

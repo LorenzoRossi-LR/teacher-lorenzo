@@ -79,6 +79,11 @@ a{color:var(--accent)}
 .roster .kick{min-height:36px;padding:4px 10px;font-size:.85rem}
 .roster li.empty{border-style:dashed;color:var(--ink-faint);font-style:italic}
 .hint{margin:0;color:var(--ink-soft);font-size:.9rem}
+.bot-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.bot-row .bot-label{grid-column:1/-1;font-size:.78rem;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.08em}
+.bot-row .btn{min-height:44px;padding:6px 8px}
+.roster .tag.bot{color:var(--accent)}
+.scores .nm .me.bot{color:var(--ink-faint)}
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .seg-btn{border-radius:12px;border:1px solid var(--line);background:var(--ground);padding:10px;font-weight:700;cursor:pointer;min-height:58px}
 .seg-btn small{font-weight:500;color:var(--ink-soft)}

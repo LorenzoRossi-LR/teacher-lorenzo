@@ -78,6 +78,7 @@ function pollDelay() {
   if (v.phase === "buzz" || (v.phase === "final" && v.final && v.final.picked)) return 700;
   if (v.phase === "lobby" || v.phase === "over") return 2500;
   if (v.phase === "wheel" && v.turn === v.you) return 2000;   // le mie mosse tornano già nella risposta
+  if (v.phase === "wheel" && v.players.some((p) => p.bot && p.id === v.turn)) return 900;   // i bot muovono quando qualcuno guarda
   return 1300;
 }
 
@@ -113,6 +114,17 @@ async function createRoom() {
   const r = await api("POST", "/api/rooms", { name });
   if (!r.ok) return msg(r.data.error ? r.data.error.message : "Non riesco a creare la stanza.");
   enter(r.data);
+}
+
+// Stanza con due bot di livello medio: un tocco e si è in sala d'attesa, pronti a partire.
+async function playBots() {
+  const name = readName();
+  if (!name) return msg("Scrivi il tuo nome.");
+  const r = await api("POST", "/api/rooms", { name });
+  if (!r.ok) return msg(r.data.error ? r.data.error.message : "Non riesco a creare la stanza.");
+  enter(r.data);
+  await act({ type: "add_bot", level: "medio" });
+  await act({ type: "add_bot", level: "medio" });
 }
 
 async function joinRoom() {
@@ -165,10 +177,11 @@ function renderLobby(v) {
   v.players.forEach((p) => {
     const li = el("li");
     li.append(el("span", "who", p.name));
+    if (p.bot) li.append(el("span", "tag bot", `bot · ${p.bot}`));
     if (p.id === v.hostId) li.append(el("span", "tag", "stanza"));
     if (p.id === v.you) li.append(el("span", "tag", "tu"));
     if (v.host && p.id !== v.you) {
-      const k = el("button", "btn ghost kick", "Allontana");
+      const k = el("button", "btn ghost kick", p.bot ? "Togli" : "Allontana");
       k.addEventListener("click", () => act({ type: "kick", target: p.id }));
       li.append(k);
     }
@@ -176,8 +189,9 @@ function renderLobby(v) {
   });
   for (let i = v.players.length; i < 3; i++) ul.append(el("li", "empty", "posto libero"));
   $("l-host").hidden = !v.host;
+  $("l-bots").hidden = v.players.length >= 3;
   $("l-hint").textContent = v.host
-    ? "Manda il codice o il link a chi gioca con te, poi avvia quando siete dentro."
+    ? "Manda il codice o il link a chi gioca con te, oppure riempi i posti con dei bot, poi avvia."
     : "Aspetta che chi ha creato la stanza avvii la partita.";
 }
 
@@ -221,6 +235,7 @@ function renderScores(v) {
     if (!p.online) li.classList.add("off");
     const nm = el("span", "nm", p.name);
     if (p.id === v.you) nm.append(el("span", "me", "TU"));
+    if (p.bot) nm.append(el("span", "me bot", "BOT"));
     li.append(nm);
     li.append(el("span", "rd", `€ ${p.round.toLocaleString("it-IT")}`));
     li.append(el("span", "bk", `banca € ${p.bank.toLocaleString("it-IT")}`));
@@ -462,6 +477,10 @@ function submitOn(input, button, fn) {
 function wire() {
   $("h-create").addEventListener("click", createRoom);
   $("h-join").addEventListener("click", joinRoom);
+  $("h-bots").addEventListener("click", playBots);
+  for (const b of document.querySelectorAll(".bot-add")) {
+    b.addEventListener("click", () => act({ type: "add_bot", level: b.dataset.level }));
+  }
   $("h-code").addEventListener("input", (e) => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6); });
   try { $("h-name").value = localStorage.getItem("ruota:name") || ""; } catch { /* niente */ }
 

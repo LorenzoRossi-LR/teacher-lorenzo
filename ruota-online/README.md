@@ -25,6 +25,22 @@ strumenti per sviluppatori. Il pulsante è equo: vince chi arriva primo al serve
 I telefoni si aggiornano con un polling adattivo (0,7 s quando il tempo conta, fino a 2,5 s
 in sala d'attesa, 5 s a schermo spento), pensato per restare nelle quote gratuite.
 
+## Bot
+
+Chi crea la stanza può riempire i posti liberi con dei bot (**Facile**, **Medio**, **Forte**);
+dalla home, *Gioca contro due bot* crea la stanza con due bot medi in un tocco. I bot girano
+sul server dentro lo stesso motore, con le stesse regole, una mossa ogni 1,8 s perché si veda
+cosa fanno. La bravura è una probabilità (lettera giusta, momento della prenotazione, risposta
+esatta, tabelloni del finale), non una sbirciata gratis alla frase. Non hanno token: nessuno può
+giocare al posto di un bot. Si muovono solo mentre qualcuno guarda la stanza: senza umani
+collegati la stanza resta ferma e scade come le altre.
+
+| Livello | Lettera giusta | Si prenota a | Risposta giusta | Finali vinti (simulazione) |
+|---|---|---|---|---|
+| Facile | 45% | ~75% delle lettere | 75% | ~7% |
+| Medio | 62% | ~60% | 88% | ~20% |
+| Forte | 80% | ~47% | 95% | ~67% |
+
 ## Sicurezza
 
 | Rischio | Contromisura |
@@ -48,6 +64,7 @@ Pagina informativa per chi gioca: [`public/privacy.html`](public/privacy.html).
 node dev/server.mjs            # http://localhost:8787
 npm test                       # motore, API e adattatore Cloudflare
 npm i -D playwright-core && CHROME_PATH=… node test/e2e.mjs   # tre telefoni, partita intera
+CHROME_PATH=… node test/e2e-bots.mjs                         # un telefono contro due bot
 ```
 
 ## Pubblicazione su Cloudflare
