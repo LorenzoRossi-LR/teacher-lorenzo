@@ -40,3 +40,5 @@ Se una decisione ne supera un'altra, si aggiunge una voce nuova con `[supersedes
 ## 2026-09-24 — Ruota Online funziona senza account: codice stanza di 6 caratteri, token per giocatore conservato solo come hash, nessuna risorsa di terze parti, IP solo come hash con sale giornaliero, stanze cancellate 2 ore dopo l'ultima mossa
 
 ## 2026-09-24 — Il gioco è mobile first: ruota compatta da 104 px col valore accanto, tastiera a schermo e pulsante di prenotazione grande, sia in Ruota Online sia in Ruota Lab
+
+## 2026-09-24 — Ruota Online è online su https://ruota-online.lorenx-rossi.workers.dev e si ripubblica da sola a ogni merge su main tramite Workers Builds (percorso /ruota-online); gli URL di anteprima per versione sono spenti

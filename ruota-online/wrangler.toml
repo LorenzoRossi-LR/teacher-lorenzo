@@ -3,6 +3,7 @@ name = "ruota-online"
 main = "cloudflare/worker.js"
 compatibility_date = "2025-09-01"
 workers_dev = true
+preview_urls = false          # un solo indirizzo pubblico: niente URL per versione
 
 [assets]
 directory = "./public"

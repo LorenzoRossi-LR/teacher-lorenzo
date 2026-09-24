@@ -16,7 +16,7 @@ Ultimo aggiornamento: **2026-09-24**
 | **Ruota Lab** — il trainer giocabile | https://claude.ai/artifact/WKUQM7ece5vRPiQEXFYb3W |
 | **Protocollo Ruota** — il piano di allenamento | https://claude.ai/artifact/SsgzuvxPPwAE88naPu7F79 |
 | Sorgenti del trainer | `ruota-lab/` in questo repo |
-| **Ruota Online** — multigiocatore, un telefono a testa | `ruota-online/` in questo repo · da pubblicare su Cloudflare (vedi §6) |
+| **Ruota Online** — multigiocatore, un telefono a testa | **https://ruota-online.lorenx-rossi.workers.dev** · sorgenti in `ruota-online/` (vedi §6) |
 | Corpus iniziale (390 frasi) | `ruota-lab/seed/*.json` |
 | Routine settimanale | trigger `trig_01CTXc8v9cFvUQCH6VTxfnKS`, lunedì 06:00 (04:00 UTC) |
 | Promemoria serale | evento Google Calendar ricorrente, ogni giorno 23:45–00:00 (Europe/Rome), id `4738j6at75qogmsdf02llrtolk` |
@@ -247,8 +247,12 @@ da altri). Codice in `ruota-online/`, documentazione completa in `ruota-online/R
 - **Verifiche**: 18 test automatici (motore, API, sicurezza, adattatore Cloudflare) + un
   E2E con tre browser in formato telefono che giocano una partita intera fino al finale;
   `wrangler deploy --dry-run` superato.
-- **Da fare per metterla online** (serve il tuo account Cloudflare): Workers & Pages →
-  Create → Import a repository → `teacher-lorenzo`, root directory `ruota-online` → Deploy.
+- **Online** dal 2026-09-24: https://ruota-online.lorenx-rossi.workers.dev — Worker
+  `ruota-online` sull'account Cloudflare lorenx.rossi, pubblicato con Workers Builds dal repo
+  `teacher-lorenzo` (percorso `/ruota-online`, comando `npx wrangler deploy`). Ogni merge su
+  `main` ripubblica da solo; gli URL di anteprima per versione sono spenti (`preview_urls = false`).
+- **Facoltativo**: segreto `IP_SALT_SECRET` (Worker → Settings → Variables and Secrets) e un
+  dominio proprio dalla scheda Domains.
 
 Anche **Ruota Lab** è ora mobile first: ruota compatta in riga col valore e il pulsante,
 schede scorrevoli, lettere più grandi, pannello modalità richiudibile.
@@ -340,7 +344,8 @@ dalle generate.
 - [ ] Manche Express e ruota del tempo dentro la partita.
 - [ ] Avversari più realistici (leggono lo stato del tabellone, non solo la percentuale).
 - [ ] Audio/effetti sonori.
-- [ ] Pubblicare Ruota Online su Cloudflare (import del repo, root `ruota-online`).
+- [x] Pubblicare Ruota Online su Cloudflare → https://ruota-online.lorenx-rossi.workers.dev
+- [ ] Primo collaudo dal vivo con due telefoni.
 - [ ] Ruota Online: WebSocket al posto del polling prima di un'apertura davvero pubblica.
 - [ ] Prune automatico della collection `games` oltre i 200 documenti.
 - [ ] Esercizi D7 (decisioni sulla ruota) e D10 (dizione sotto carico) dentro l'app.
@@ -384,3 +389,5 @@ dalle generate.
 ## 2026-09-24 — Ruota Online non ha account: stanza con codice di 6 caratteri, token per giocatore salvato solo come hash, nessuna risorsa di terze parti, stanze cancellate 2 ore dopo l'ultima mossa
 
 ## 2026-09-24 — Il gioco è mobile first: ruota compatta (104 px) col valore accanto, tastiera a schermo e pulsante di prenotazione grande, sia in Ruota Online sia in Ruota Lab
+
+## 2026-09-24 — Ruota Online è online su https://ruota-online.lorenx-rossi.workers.dev e si ripubblica da sola a ogni merge su main tramite Workers Builds (percorso /ruota-online); gli URL di anteprima per versione sono spenti
