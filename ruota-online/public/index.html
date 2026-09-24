@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0B1413">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="La Ruota della Fortuna da giocare in due o tre, ognuno dal proprio telefono.">
+<title>Ruota Online</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon.svg">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<main id="app">
+
+  <!-- ══ HOME ══ -->
+  <section class="screen" id="s-home">
+    <header class="brand">
+      <div class="brand-wheel" aria-hidden="true"></div>
+      <h1>Ruota Online</h1>
+      <p>Fino a tre giocatori, ognuno col suo telefono.</p>
+    </header>
+
+    <div class="panel">
+      <label class="field">Il tuo nome
+        <input id="h-name" type="text" maxlength="20" autocomplete="nickname" autocapitalize="words" enterkeyhint="done">
+      </label>
+      <button class="btn primary big" id="h-create">Crea una stanza</button>
+    </div>
+
+    <div class="or"><span>oppure</span></div>
+
+    <div class="panel">
+      <label class="field">Codice della stanza
+        <input id="h-code" type="text" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" enterkeyhint="go" class="code-input">
+      </label>
+      <button class="btn big" id="h-join">Entra</button>
+    </div>
+
+    <p class="msg" id="h-msg" role="alert"></p>
+    <p class="fine">Niente account, niente pubblicità, niente tracciamento. <a href="/privacy.html">Privacy</a></p>
+  </section>
+
+  <!-- ══ SALA D'ATTESA ══ -->
+  <section class="screen" id="s-lobby" hidden>
+    <p class="eyebrow">Sala d'attesa</p>
+    <div class="code-card">
+      <span class="code-label">Codice</span>
+      <strong class="code-big" id="l-code">——————</strong>
+      <button class="btn" id="l-share">Invita</button>
+    </div>
+    <ul class="roster" id="l-players"></ul>
+    <p class="hint" id="l-hint"></p>
+
+    <div class="panel" id="l-host">
+      <div class="seg" role="radiogroup" aria-label="Durata">
+        <button class="seg-btn on" data-len="breve" role="radio" aria-checked="true">Breve<br><small>3 manche · 10′</small></button>
+        <button class="seg-btn" data-len="completa" role="radio" aria-checked="false">Completa<br><small>6 manche · 25′</small></button>
+      </div>
+      <button class="btn primary big" id="l-start">Inizia la partita</button>
+    </div>
+    <button class="btn ghost" id="l-leave">Esci dalla stanza</button>
+  </section>
+
+  <!-- ══ PARTITA ══ -->
+  <section class="screen game" id="s-game" hidden>
+    <header class="topbar">
+      <span id="g-manche">Manche</span>
+      <span id="g-mnum" class="mono"></span>
+    </header>
+
+    <div class="board-wrap">
+      <p class="cat" id="g-cat"></p>
+      <div class="board" id="g-board" aria-label="Tabellone"></div>
+      <p class="solution" id="g-show" hidden></p>
+    </div>
+
+    <ul class="scores" id="g-scores"></ul>
+
+    <p class="status" id="g-status" aria-live="polite"></p>
+
+    <!-- area comandi: cambia con la fase -->
+    <div class="dock" id="g-dock">
+
+      <div class="pane" id="p-wheel" hidden>
+        <div class="wheel-row">
+          <div class="mini-wheel-box">
+            <div class="mini-pointer"></div>
+            <div class="mini-wheel" id="g-wheel"></div>
+          </div>
+          <div class="wheel-side">
+            <div class="value" id="g-value">—</div>
+            <button class="btn primary" id="g-spin">Gira</button>
+            <button class="btn" id="g-solve-open">Risolvi</button>
+          </div>
+        </div>
+        <div class="solve-row" id="g-solve-row" hidden>
+          <input id="g-solve" type="text" maxlength="80" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="send" placeholder="La frase intera">
+          <button class="btn primary" id="g-solve-send">Invia</button>
+        </div>
+        <div class="kbd" id="g-kbd"></div>
+      </div>
+
+      <div class="pane" id="p-buzz" hidden>
+        <div class="buzz-meta"><span id="b-count"></span><span id="b-value" class="gold"></span></div>
+        <button class="buzzer" id="b-buzz">PRENOTATI</button>
+        <div class="solve-row" id="b-answer-row" hidden>
+          <input id="b-answer" type="text" maxlength="80" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="send" placeholder="La frase intera">
+          <button class="btn primary" id="b-send">Invia</button>
+        </div>
+      </div>
+
+      <div class="pane" id="p-final" hidden>
+        <div class="final-head">
+          <span id="f-title">Ruota delle Meraviglie</span>
+          <span class="timer mono" id="f-timer"></span>
+        </div>
+        <p class="hint" id="f-hint"></p>
+        <div class="kbd" id="f-kbd"></div>
+        <button class="btn primary" id="f-go" hidden>Conferma le lettere</button>
+        <div class="solve-row" id="f-solve-row" hidden>
+          <input id="f-solve" type="text" maxlength="80" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="send" placeholder="La frase intera">
+          <button class="btn primary" id="f-send">Invia</button>
+        </div>
+      </div>
+
+      <div class="pane" id="p-over" hidden>
+        <h2 id="o-title">Fine partita</h2>
+        <ol class="podium" id="o-podium"></ol>
+        <button class="btn primary big" id="o-again" hidden>Rivincita</button>
+        <button class="btn ghost" id="o-leave">Esci</button>
+      </div>
+    </div>
+
+    <ol class="log" id="g-log" aria-label="Cronaca"></ol>
+  </section>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+</main>
+
+<script type="module" src="/app.js"></script>
+</body>
+</html>

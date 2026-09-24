@@ -1,0 +1,257 @@
+<title>Ruota Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Saira+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600&display=swap">
+<link rel="stylesheet" href="styles.css">
+
+<div class="shell">
+
+  <header class="top">
+    <div class="brand">
+      <h1>Ruota Lab</h1>
+      <span class="sub">palestra per La Ruota della Fortuna</span>
+    </div>
+    <div class="status" id="dbstate"><span class="dot"></span> collegamento…</div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button data-v="oggi" aria-selected="true">Oggi</button>
+    <button data-v="gioca" aria-selected="false">Partita</button>
+    <button data-v="allenamento" aria-selected="false">Allenamento</button>
+    <button data-v="stats" aria-selected="false">Statistiche</button>
+    <button data-v="regole" aria-selected="false">Regole</button>
+    <button data-v="archivio" aria-selected="false">Archivio TV</button>
+    <button data-v="coach" aria-selected="false">Coach</button>
+  </nav>
+
+  <!-- ══ OGGI ══ -->
+  <section class="view on" id="view-oggi">
+    <div id="today-host"></div>
+  </section>
+
+  <!-- ══ PARTITA ══ -->
+  <section class="view" id="view-gioca">
+    <details class="setup" id="setup-box">
+      <summary>Modalità e giocatori</summary>
+      <div class="row">
+        <label class="fld">Modalità
+          <select id="mode-sel">
+            <option value="solo">Allenamento — tu e due simulati</option>
+            <option value="duo">Salotto — due giocatori</option>
+            <option value="trio">Salotto — tre giocatori</option>
+          </select>
+        </label>
+        <label class="fld" id="n1-wrap">Giocatore 1
+          <input type="text" id="n1" maxlength="24" value="Tu" autocomplete="off">
+        </label>
+        <label class="fld" id="n2-wrap" hidden>Giocatore 2
+          <input type="text" id="n2" maxlength="24" value="Giocatore 2" autocomplete="off">
+        </label>
+        <label class="fld" id="n3-wrap" hidden>Giocatore 3
+          <input type="text" id="n3" maxlength="24" value="Giocatore 3" autocomplete="off">
+        </label>
+        <button class="btn" id="btn-apply-setup">Nuova partita</button>
+      </div>
+      <p class="mono" id="setup-hint"></p>
+    </details>
+    <p class="mono" id="versus-line"></p>
+
+    <div class="sec-head">
+      <p class="eyebrow" id="manche-num">Manche 1 / 5</p>
+      <h2 id="manche-name">Manche classica</h2>
+    </div>
+
+    <div class="board-wrap">
+      <div class="board-cat" id="board-cat">Frase</div>
+      <div class="board" id="board"></div>
+    </div>
+
+    <div class="players" id="players"></div>
+
+    <div class="play-grid">
+      <div class="wheel-box" id="wheel-box">
+        <div class="wheel-outer">
+          <div class="pointer"></div>
+          <div class="wheel" id="wheel"></div>
+        </div>
+        <div class="wheel-val" id="wheel-val">—</div>
+        <button class="btn primary" id="btn-spin">Gira la ruota</button>
+      </div>
+
+      <div class="controls">
+        <p class="turn-line" id="turn-line" hidden></p>
+        <div class="btnrow">
+          <button class="btn" id="btn-vowel">Compra vocale · € 200</button>
+          <button class="btn ghost sm" id="btn-skip">Svela e passa oltre</button>
+          <button class="btn ghost sm" id="btn-newgame">Nuova partita</button>
+        </div>
+
+        <div id="wheel-controls">
+          <p class="kbhint mono"><b>Tastiera:</b> una lettera la chiami (le vocali le compri) · <b>Spazio</b> gira la ruota · <b>Invio</b> apre il campo soluzione · <b>Esc</b> ne esce</p>
+          <div class="keys" id="keys"></div>
+          <div class="solvebar" style="margin-top:12px">
+            <input id="solve-input" placeholder="Scrivi la frase intera e premi Invio" autocomplete="off" spellcheck="false">
+            <button class="btn primary" id="btn-solve">Risolvi</button>
+          </div>
+        </div>
+
+        <div id="buzz-panel" hidden>
+          <div class="row" style="margin-bottom:10px">
+            <span class="pill" id="buzz-count">Frase 1 / 4</span>
+            <span class="pill warn" id="buzz-value">€ 1.000</span>
+          </div>
+          <p class="kbhint mono"><b>Tastiera:</b> <b>Spazio</b> prenota il primo giocatore · in due o tre, <b>1</b> <b>2</b> <b>3</b> prenotano il rispettivo</p>
+          <div class="row" id="buzz-buttons"></div>
+          <div class="solvebar" id="buzz-answer" hidden style="margin-top:10px">
+            <input id="buzz-input" placeholder="La frase intera" autocomplete="off" spellcheck="false">
+            <button class="btn primary" id="btn-buzz-send">Rispondi</button>
+          </div>
+        </div>
+
+        <div class="meta" id="meta-info"></div>
+        <div class="log" id="gamelog"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ ALLENAMENTO ══ -->
+  <section class="view" id="view-allenamento">
+    <div class="sec-head">
+      <p class="eyebrow">Sala pesi</p>
+      <h2>Esercizi cronometrati</h2>
+      <p>Ogni esercizio isola una competenza del gioco reale e registra il risultato. Fanne pochi, tutti i giorni, invece di una sessione lunga a settimana.</p>
+    </div>
+    <div class="cards" id="drill-cards"></div>
+  </section>
+
+  <!-- ══ STATISTICHE ══ -->
+  <section class="view" id="view-stats">
+    <div class="sec-head">
+      <p class="eyebrow">Sala macchine</p>
+      <h2>I tuoi numeri</h2>
+      <p>Gli indicatori si aggiornano da soli a ogni partita e a ogni esercizio. Il profilo degli errori è la parte che conta: dice su cosa allenarti domani.</p>
+    </div>
+    <div class="tiles" id="kpi-tiles"></div>
+
+    <div id="trend"></div>
+
+    <div>
+      <h3 class="d">Profilo degli errori</h3>
+      <div id="mistake-table"></div>
+    </div>
+
+    <div>
+      <h3 class="d">Ultimi errori</h3>
+      <div id="recent-mistakes"></div>
+    </div>
+
+    <div>
+      <h3 class="d">Ultime partite</h3>
+      <div id="recent-games"></div>
+    </div>
+  </section>
+
+  <!-- ══ REGOLE ══ -->
+  <section class="view" id="view-regole">
+    <div class="sec-head">
+      <p class="eyebrow">Ripetizione spaziata</p>
+      <h2>Regole e tattiche</h2>
+      <p id="rules-count">—</p>
+    </div>
+    <div id="rules-host"></div>
+  </section>
+
+  <!-- ══ ARCHIVIO TV ══ -->
+  <section class="view" id="view-archivio">
+    <div class="sec-head">
+      <p class="eyebrow">Frasi vere</p>
+      <h2>Archivio TV</h2>
+      <p>Un archivio pubblico dei tabelloni andati in onda non esiste: questo lo costruisci tu, puntata per puntata. Guarda la puntata, metti in pausa sul tabellone completo, incolla qui le frasi — una per riga.</p>
+    </div>
+
+    <div class="row">
+      <label class="fld">Data puntata
+        <input type="date" id="tv-date">
+      </label>
+      <label class="fld">Manche (facoltativo)
+        <input type="text" id="tv-manche" placeholder="es. Triplete" style="min-width:160px">
+      </label>
+    </div>
+
+    <textarea id="tv-text" rows="7" placeholder="UNA FRASE PER RIGA&#10;CHI DORME NON PIGLIA PESCI&#10;LA LOCANDA DI SAMIRA"></textarea>
+
+    <div class="row">
+      <button class="btn primary" id="btn-tv-add">Aggiungi all'archivio</button>
+      <span class="mono" id="tv-out" style="font-size:.85rem;color:var(--ink-faint)"></span>
+    </div>
+
+    <hr class="hr">
+
+    <div>
+      <h3 class="d" id="tv-count">Archivio ancora vuoto</h3>
+      <label class="check">
+        <input type="checkbox" id="tv-only">
+        <span>Gioca solo con le frasi viste in TV</span>
+      </label>
+      <p class="mono" id="tv-only-note" style="font-size:.8rem;color:var(--ink-faint);margin:.3em 0 1em"></p>
+      <div id="tv-list"></div>
+    </div>
+  </section>
+
+  <!-- ══ COACH ══ -->
+  <section class="view" id="view-coach">
+    <div class="sec-head">
+      <p class="eyebrow">Analisi</p>
+      <h2>Coach</h2>
+      <p>Legge le tue statistiche e il profilo degli errori e prescrive gli esercizi della settimana. <span id="corpus-count" class="mono"></span></p>
+    </div>
+
+    <div id="coach-wrap" hidden>
+      <button class="btn primary" id="btn-coach">Analizza il mio allenamento</button>
+      <div class="coach-out" id="coach-out">Premi il pulsante: l'analisi parte dai numeri veri registrati qui dentro.</div>
+    </div>
+
+    <hr class="hr">
+
+    <div id="gen-wrap" hidden>
+      <h3 class="d">Nuovi tabelloni</h3>
+      <p style="color:var(--ink-soft);font-size:.95rem;margin:.2em 0 .8em">Amplia l'archivio delle frasi: le nuove restano salvate e rientrano nel gioco e negli esercizi.</p>
+      <div class="row">
+        <label class="fld">Categoria
+          <select id="gen-cat"></select>
+        </label>
+        <label class="fld">Quante
+          <input type="number" id="gen-n" value="15" min="5" max="40">
+        </label>
+        <button class="btn" id="btn-gen">Genera e salva</button>
+      </div>
+      <p class="mono" id="gen-out" style="font-size:.85rem;color:var(--ink-faint)"></p>
+    </div>
+  </section>
+
+</div>
+
+<!-- modale esercizi / finale -->
+<div class="modal" id="drill-modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2 id="modal-title">Esercizio</h2>
+      <button class="btn ghost sm" id="modal-close">Chiudi</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- modale vocali -->
+<div class="modal" id="vowel-modal">
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-head">
+      <h2>Quale vocale?</h2>
+      <button class="btn ghost sm" id="vowel-close">Annulla</button>
+    </div>
+    <div class="keyrow" id="vowel-pick"></div>
+    <p class="mono" style="font-size:.8rem;color:var(--ink-faint)">Costa 200 € e non fa perdere il turno.</p>
+  </div>
+</div>
+
+<script src="app.js"></script>

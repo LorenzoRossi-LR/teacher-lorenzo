@@ -1,0 +1,25 @@
+# Ruota Online su Cloudflare Workers + Durable Objects (piano gratuito sufficiente).
+name = "ruota-online"
+main = "cloudflare/worker.js"
+compatibility_date = "2025-09-01"
+workers_dev = true
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = true          # ogni risposta passa dal worker, che aggiunge le intestazioni di sicurezza
+
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "Room"
+
+[[durable_objects.bindings]]
+name = "LIMITER"
+class_name = "Limiter"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room", "Limiter"]
+
+[observability]
+enabled = true
