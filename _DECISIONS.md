@@ -32,3 +32,11 @@ Se una decisione ne supera un'altra, si aggiunge una voce nuova con `[supersedes
 ## 2026-09-23 — Le partite in salotto non alimentano statistiche, KPI e profilo errori: i risultati vanno in versus/log come record testa a testa, così le misure dell'allenamento restano individuali
 
 ## 2026-09-23 — Tutto il testo di provenienza esterna in Ruota Lab viene escapizzato prima di finire in innerHTML, i nomi dei giocatori sono ripuliti e limitati a 24 caratteri, le frasi caricate dal database sono validate a regex e l'import dell'Archivio TV è limitato a 200 righe per volta e 2000 frasi in totale
+
+## 2026-09-24 — Il multigiocatore con un telefono a testa (fino a 3) diventa una app pubblica separata, Ruota Online, con server autoritativo che non manda mai la frase al browser prima della soluzione [supersedes: 2026-09-23 multigiocatore di Ruota Lab solo locale]
+
+## 2026-09-24 — Ruota Online gira su Cloudflare Workers + Durable Objects (una istanza per stanza, piano gratuito) invece che su Vercel + Redis: niente database esterno e stanze con stato autoritativo
+
+## 2026-09-24 — Ruota Online funziona senza account: codice stanza di 6 caratteri, token per giocatore conservato solo come hash, nessuna risorsa di terze parti, IP solo come hash con sale giornaliero, stanze cancellate 2 ore dopo l'ultima mossa
+
+## 2026-09-24 — Il gioco è mobile first: ruota compatta da 104 px col valore accanto, tastiera a schermo e pulsante di prenotazione grande, sia in Ruota Online sia in Ruota Lab

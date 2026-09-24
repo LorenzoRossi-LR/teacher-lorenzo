@@ -31,7 +31,8 @@
 
   <!-- ══ PARTITA ══ -->
   <section class="view" id="view-gioca">
-    <div class="setup">
+    <details class="setup" id="setup-box">
+      <summary>Modalità e giocatori</summary>
       <div class="row">
         <label class="fld">Modalità
           <select id="mode-sel">
@@ -52,8 +53,8 @@
         <button class="btn" id="btn-apply-setup">Nuova partita</button>
       </div>
       <p class="mono" id="setup-hint"></p>
-      <p class="mono" id="versus-line"></p>
-    </div>
+    </details>
+    <p class="mono" id="versus-line"></p>
 
     <div class="sec-head">
       <p class="eyebrow" id="manche-num">Manche 1 / 5</p>

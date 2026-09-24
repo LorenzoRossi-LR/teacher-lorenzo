@@ -5,7 +5,7 @@ edizione con Gerry Scotti): come candidarsi, come allenarsi, e il trainer softwa
 costruito per farlo. **Questo file è la fonte di verità**: se una chat si azzera o viene
 compattata, si riparte da qui.
 
-Ultimo aggiornamento: **2026-09-23**
+Ultimo aggiornamento: **2026-09-24**
 
 ---
 
@@ -16,6 +16,7 @@ Ultimo aggiornamento: **2026-09-23**
 | **Ruota Lab** — il trainer giocabile | https://claude.ai/artifact/WKUQM7ece5vRPiQEXFYb3W |
 | **Protocollo Ruota** — il piano di allenamento | https://claude.ai/artifact/SsgzuvxPPwAE88naPu7F79 |
 | Sorgenti del trainer | `ruota-lab/` in questo repo |
+| **Ruota Online** — multigiocatore, un telefono a testa | `ruota-online/` in questo repo · da pubblicare su Cloudflare (vedi §6) |
 | Corpus iniziale (390 frasi) | `ruota-lab/seed/*.json` |
 | Routine settimanale | trigger `trig_01CTXc8v9cFvUQCH6VTxfnKS`, lunedì 06:00 (04:00 UTC) |
 | Promemoria serale | evento Google Calendar ricorrente, ogni giorno 23:45–00:00 (Europe/Rome), id `4738j6at75qogmsdf02llrtolk` |
@@ -222,7 +223,39 @@ registrato come `lettera_ripetuta`. La rotazione della ruota è stata portata da
 
 ---
 
-## 6. Il database
+## 6. Ruota Online — tre giocatori, tre telefoni
+
+App web pubblica separata dall'artifact (che è privato al tuo account e non può essere aperto
+da altri). Codice in `ruota-online/`, documentazione completa in `ruota-online/README.md`.
+
+- **Niente account**: chi crea la stanza riceve un codice di 6 caratteri e un link
+  (`/CODICE`) da mandare agli altri; fino a 3 giocatori; partita *breve* (3 manche, ~10′) o
+  *completa* (6 manche, ~25′), poi la Ruota delle Meraviglie per il campione, gli altri tifano.
+- **Server autoritativo** (`src/engine.js`): ruota, lettere, pulsante e finale li decide il
+  server; il telefono riceve solo le tessere scoperte, **la frase non arriva mai al browser
+  prima della soluzione**. Pulsante equo: vince chi arriva prima al server.
+- **Mobile first**, tema unico "studio di sera", ruota compatta da 104 px con il valore
+  accanto, tastiera QWERTY a schermo, pulsante di prenotazione enorme, installabile come app
+  (manifest + icona).
+- **Sicurezza**: token da 256 bit salvati solo come hash, codici non enumerabili (limite
+  d'ingresso per IP), CSP senza script inline né terze parti, HSTS, anti-framing, input
+  validati a elenco chiuso, filtro dei nomi, stanze cancellate 2 ore dopo l'ultima mossa,
+  IP solo come hash con sale giornaliero. Pagina privacy in `public/privacy.html`.
+- **Piattaforma**: Cloudflare Workers + Durable Objects (una istanza per stanza, scrittura
+  condizionata) — piano gratuito sufficiente. Polling adattivo 0,7–5 s per stare nella quota
+  gratuita; passaggio a WebSocket come passo successivo per un lancio pubblico.
+- **Verifiche**: 18 test automatici (motore, API, sicurezza, adattatore Cloudflare) + un
+  E2E con tre browser in formato telefono che giocano una partita intera fino al finale;
+  `wrangler deploy --dry-run` superato.
+- **Da fare per metterla online** (serve il tuo account Cloudflare): Workers & Pages →
+  Create → Import a repository → `teacher-lorenzo`, root directory `ruota-online` → Deploy.
+
+Anche **Ruota Lab** è ora mobile first: ruota compatta in riga col valore e il pulsante,
+schede scorrevoli, lettere più grandi, pannello modalità richiudibile.
+
+---
+
+## 7. Il database
 
 Appartiene all'artifact (indirizzato dal suo URL), non alla pagina né alla chat.
 Sopravvive a ripubblicazioni e sessioni. Da chat si legge con `read_db` e si scrive con
@@ -256,7 +289,7 @@ animali, sport-scienza, quotidiano` — 390 frasi uniche al seeding del 14/09/20
 
 ---
 
-## 7. La Routine settimanale
+## 8. La Routine settimanale
 
 Trigger `trig_01CTXc8v9cFvUQCH6VTxfnKS`, **ogni lunedì alle 04:00 UTC** (06:00 italiane),
 apre una sessione nuova che: sceglie le 3 categorie con meno voci, genera 20 frasi nuove
@@ -266,7 +299,7 @@ Prima esecuzione: **21 settembre 2026**.
 
 ---
 
-## 8. Archivio dei tabelloni realmente andati in onda
+## 9. Archivio dei tabelloni realmente andati in onda
 
 **Verdetto della ricerca (14/09/2026): non esiste** un archivio pubblico completo delle
 frasi andate in onda, per nessuna edizione (Bongiorno, Papi, Scotti). Per confronto,
@@ -301,18 +334,20 @@ dalle generate.
 
 ---
 
-## 9. Cosa manca / prossimi passi
+## 10. Cosa manca / prossimi passi
 
 - [x] Sezione "Archivio TV" per le frasi trascritte dalle puntate (categoria `tv-reali`).
 - [ ] Manche Express e ruota del tempo dentro la partita.
 - [ ] Avversari più realistici (leggono lo stato del tabellone, non solo la percentuale).
 - [ ] Audio/effetti sonori.
+- [ ] Pubblicare Ruota Online su Cloudflare (import del repo, root `ruota-online`).
+- [ ] Ruota Online: WebSocket al posto del polling prima di un'apertura davvero pubblica.
 - [ ] Prune automatico della collection `games` oltre i 200 documenti.
 - [ ] Esercizi D7 (decisioni sulla ruota) e D10 (dizione sotto carico) dentro l'app.
 
 ---
 
-## 10. Registro delle decisioni
+## 11. Registro delle decisioni
 
 ## 2026-09-14 — La preparazione punta sul completamento di pattern (55% del tempo), non sulla cultura generale, che scende al 10% e serve soprattutto al casting
 
@@ -341,3 +376,11 @@ dalle generate.
 ## 2026-09-23 — Le partite in salotto non alimentano statistiche, KPI e profilo errori, che restano misure dell'allenamento individuale: i risultati vanno in `versus/log` come record testa a testa
 
 ## 2026-09-23 — Tutto il testo di provenienza esterna viene escapizzato prima di finire in innerHTML, i nomi sono ripuliti e limitati a 24 caratteri e le frasi caricate dal database sono validate a regex
+
+## 2026-09-24 — Il multigiocatore con un telefono a testa (fino a 3) è una app pubblica separata, Ruota Online, con server autoritativo: la frase non arriva mai al browser prima della soluzione [supersedes: 2026-09-23 multigiocatore solo locale]
+
+## 2026-09-24 — Ruota Online gira su Cloudflare Workers + Durable Objects (una istanza per stanza, piano gratuito), non su Vercel: niente database esterno e stanze con stato autoritativo
+
+## 2026-09-24 — Ruota Online non ha account: stanza con codice di 6 caratteri, token per giocatore salvato solo come hash, nessuna risorsa di terze parti, stanze cancellate 2 ore dopo l'ultima mossa
+
+## 2026-09-24 — Il gioco è mobile first: ruota compatta (104 px) col valore accanto, tastiera a schermo e pulsante di prenotazione grande, sia in Ruota Online sia in Ruota Lab

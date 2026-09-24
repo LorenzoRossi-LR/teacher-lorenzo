@@ -275,3 +275,38 @@ label.check input{width:16px;height:16px;accent-color:var(--accent)}
 #versus-line:empty{display:none}
 #versus-line{color:var(--gold);font-weight:600;letter-spacing:.03em}
 .turn-line{margin:0;font-family:var(--f-display);font-weight:700;font-size:1.25rem;color:var(--accent)}
+
+/* ── mobile first: ruota compatta e lettere a portata di pollice ── */
+@media (max-width:600px){
+  .shell{padding-inline:12px}
+  .top{padding-block:12px 8px}
+  .brand .sub{display:none}
+  nav.tabs{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
+  nav.tabs::-webkit-scrollbar{display:none}
+  nav.tabs button{flex:none;padding:8px 10px}
+  .view{padding-block:14px;gap:14px}
+  .setup{padding:10px}
+  .players .pl{padding:8px 9px}
+  .pl .rd{font-size:1rem}
+
+  .play-grid{gap:12px}
+  .wheel-box{flex-direction:row;justify-content:flex-start;gap:14px}
+  .wheel-outer{width:104px;height:104px;flex:none}
+  .wheel .lbl{display:none}
+  .wheel{border-width:2px}
+  .pointer{border-left-width:7px;border-right-width:7px;border-top-width:13px;top:-5px}
+  .wheel-val{font-size:1.4rem;text-align:left;min-width:5ch}
+  #btn-spin{flex:1;min-height:48px}
+
+  .controls{gap:10px}
+  .btnrow .btn{flex:1}
+  .kbhint{display:none}
+  #wheel-controls{position:sticky;bottom:0;background:var(--paper);padding-block:6px calc(6px + env(safe-area-inset-bottom,0px));z-index:5}
+  .keys{gap:5px}
+  .keyrow{gap:4px;justify-content:center}
+  .key{flex:1 0 12%;max-width:44px;height:42px;font-size:1rem}
+  .solvebar input{min-width:0;height:46px}
+  .log{max-height:6em}
+}
+details.setup summary{cursor:pointer;font-family:var(--f-display);font-weight:600;font-size:1rem;color:var(--ink-soft);list-style-position:inside}
+details.setup[open] summary{margin-bottom:8px;color:var(--ink)}
