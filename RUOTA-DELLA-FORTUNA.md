@@ -338,6 +338,66 @@ corte falsa il pattern completion. In corso: raccolta delle frasi citate nei rec
 delle puntate e delle regole di formato del tabellone, per rigenerare il corpus con la
 forma giusta e tenere le frasi corte solo dove servono (es. finale).
 
+### Tabelloni veri raccolti dai recap (ricerca del 25/09/2026)
+
+Fonte: circa 50 ricerche web sui recap di canaledieci.it, libero.it, dilei.it e cremaoggi.it.
+Gli articoli non erano apribili direttamente, quindi il testo viene dai riassunti della
+ricerca. «Citata» = riportata tra virgolette come soluzione; «?» = formulazione o manche
+incerta.
+
+| Frase | Data | Manche | Titolo / tema | Affid. |
+|---|---|---|---|---|
+| VANITÀ È IL MIO PECCATO PREFERITO | 09/08 | partita (tabellone con titolo) | L'avvocato del diavolo | citata |
+| DI PIATTI DA LAVARE IN CUCINA | 31/08 | finale 1 | Pila | citata |
+| DI PANNI DA STIRARE | 31/08 | finale 2 | Pila | citata |
+| ELETTRICA INVENTATA DA VOLTA | 31/08 | finale 3 | Pila | citata |
+| LETTERALMENTE FRITTELLA SFRIGOLANTE | 01/09 | Piatti estivi | Banh Xeo | citata |
+| CERCARE LE CHIAVI CON LA TORCIA DEL TELEFONO | 02/09 | Ultimo Round? | Al buio / Nelle grotte? | citata, manche ? |
+| RISOLVERE TUTTE LE EQUAZIONI ALGEBRICHE | 03/09 | Compiti per le vacanze | Nessun problema | citata |
+| UN LIBRO O UN FILM | 05/09 | finale 1 | Giallo | citata |
+| IL COLORE DEI MINIONS | 05/09 | finale 2 | Giallo | citata |
+| LO VESTE IL LEADER DEL TOUR DE FRANCE | 05/09 | finale 3 | Giallo | citata |
+| UN PIATTO DA MILLE E UNA NOTTE | 08/09 | Piatti estivi | Cous cous di verdure | citata |
+| È UN ANTENATO DEL GAZPACHO | 11/09 | Piatti estivi | Cojondongo | ? |
+| LA VARIANTE DI UN SIMBOLO GASTRONOMICO | 12/09 | Piatti estivi | Pizzata ligure | ? |
+| TROPPE CENE FUORI | 12/09 | Ultimo Round | — | ? (forse titolo) |
+| INDICA LA PRESTANZA FISICA | 16/09 | finale 1 | Forza | citata |
+| VIGORE UN SUO SINONIMO | 16/09 | finale 2 | Forza | citata |
+| DI CARATTERE E DI VOLONTÀ | 16/09 | finale 3 | Forza | citata |
+| TIPICAMENTE PREPARATO NEL WOK | 18/09 | La locanda di Samira | Pad Thai | citata |
+| I DISEGNI STAMPATI SU UNA STOFFA | 19/09 | finale | Fantasia | citata |
+| I CREATIVI NE POSSIEDONO TANTA | 19/09 | finale | Fantasia | citata |
+| TOPOLINO APPRENDISTA STREGONE E LE SCOPE | 19/09 | finale | Fantasia | citata |
+| CON ACCIUGHE PINOLI E PAN GRATTATO | 20/09 | La locanda di Samira | Carciofi ripieni | citata |
+| DI ZUCCA E DI ASPARAGI | 21/09 | finale 1 | Crema | citata |
+| COMUNE ITALIANO NELLA BASSA PADANA | 21/09 | finale 2 | Crema | citata |
+
+**Cosa insegnano (e perché il corpus generato era sbagliato):**
+
+- In TV **il titolo è l'indizio e il tabellone è la descrizione**, non il contrario. Il
+  tabellone non contiene quasi mai la risposta secca («IL POSTINO»): contiene una frase di
+  3–8 parole che la descrive o la continua, e sopra c'è il titolo (il piatto, il tema, un
+  titolo scherzoso come «Nessun problema»).
+- **Finale**: una parola-tema (Pila, Giallo, Forza, Fantasia, Crema) che non compare sul
+  tabellone. Le tre frasi giocano su tre significati diversi, in due modi:
+  - una **continuazione** che fa collocazione col tema, spesso con «DI…» (Pila → DI PANNI
+    DA STIRARE; Forza → DI CARATTERE E DI VOLONTÀ);
+  - una **definizione** (Giallo → IL COLORE DEI MINIONS; Crema → COMUNE ITALIANO NELLA
+    BASSA PADANA).
+- **La locanda di Samira** (ex Piatti estivi): titolo = nome del piatto, tabellone =
+  descrizione di 3–6 parole, lettere che compaiono da sole e prenotazione, 1.000 €.
+- **Manche con titolo**: 3–7 parole sotto un titolo spesso ironico.
+- **Manche viste a settembre**: La locanda di Samira, Figli delle stelle (oroscopo: Giove
+  raddoppia, Saturno dimezza), Chiacchiere da bar, Juke Box, Il regno degli animali, Ho
+  cambiato idea, Ciak si gira, Compiti per le vacanze, In fondo al mar, Traghetto Express,
+  Ultimo Round (1.300–1.700 € a lettera).
+- **Allenamento che ne segue**: non basta completare la frase, bisogna **usare il titolo
+  come indizio** («Pad Thai» → cucina asiatica → WOK). Il finale si allena col gioco dei
+  significati multipli di una parola.
+- **Temi dei finali senza frasi** (utili per generare esempi): Banda, Mercoledì, Pezzo,
+  Ago, Parco, Grande, Esame, Avviso, Lingua, Pancia, Grande Fratello, Salto, Massimo,
+  Silenzio, Buco, Toro, Doppio, Al ristorante.
+
 **Metodo per costruirsi l'archivio** (= esercizio D9): guardare la puntata su Infinity
 entro la finestra di disponibilità, mettere in pausa sul tabellone completo, trascrivere
 frase, manche e categoria in un foglio. Automatizzabile per uso personale: registrazione
