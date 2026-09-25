@@ -330,6 +330,14 @@ Fonti reali, in ordine di utilità:
 5. **unshow.it** — https://www.unshow.it/la-ruota-della-fortuna-statistiche — statistiche
    aggregate dal 14/07/2025 al 14/02/2026 (buste finali, lettere più cercate e sbagliate).
 
+**Problema di realismo del corpus (25/09/2026).** Misurato sulle 390 frasi generate:
+mediana 3 parole e 15 lettere, ma **191 frasi (49%) hanno una o due parole** (titoli di
+film come «IL POSTINO», «AMARCORD») e 106 hanno 12 lettere o meno. In TV i tabelloni delle
+manche sono di norma più lunghi (frasi e modi di dire su più righe): allenarsi su quelle
+corte falsa il pattern completion. In corso: raccolta delle frasi citate nei recap online
+delle puntate e delle regole di formato del tabellone, per rigenerare il corpus con la
+forma giusta e tenere le frasi corte solo dove servono (es. finale).
+
 **Metodo per costruirsi l'archivio** (= esercizio D9): guardare la puntata su Infinity
 entro la finestra di disponibilità, mettere in pausa sul tabellone completo, trascrivere
 frase, manche e categoria in un foglio. Automatizzabile per uso personale: registrazione
