@@ -398,6 +398,58 @@ incerta.
   Ago, Parco, Grande, Esame, Avviso, Lingua, Pancia, Grande Fratello, Salto, Massimo,
   Silenzio, Buco, Toro, Doppio, Al ristorante.
 
+### Altri tabelloni veri e regole di formato (seconda ricerca, 25/09/2026)
+
+| Frase | Manche | Titolo / tema | Fonte |
+|---|---|---|---|
+| DETECTIVE E CONIGLIO SONO UN'IMPROBABILE COPPIA | Ciak si gira (23/07/2026) | Chi ha incastrato Roger Rabbit | dilei.it |
+| IL WINDSOR È UN FAMOSO NODO ALLA CRAVATTA | partita (nov 2025?) | — | fanpage.it |
+| IL VOLTO TORMENTATO DELLA MUSICA GRUNGE | musicale | Nirvana | canaledieci (12/04/2026?) |
+| LA SUA FORTUNA È UNA RUOTA DOVE CORRERE | Il regno degli animali | Il criceto | canaledieci (12/04/2026?) |
+| ABBATTE ALBERI COI DENTI IN POCHI MINUTI | Il regno degli animali | Castoro | canaledieci |
+| UN RETTILE SIMILE A UN DRAGO COL COLLARE | Il regno degli animali | Clamidosauro | canaledieci |
+| VINSERO BATTAGLIE GRAZIE ALLA LORO FOGA | era Bongiorno (1995) | Amazzoni | tgcom24 |
+| DI QUALITÀ È SEMPRE POSITIVO | finale 1 (18/09/2026) | Salto | canaledieci |
+| NEL BUIO NON HA GARANZIE | finale 2 (Testacoda) | Salto | canaledieci |
+| MORTALE CON ROTAZIONE COMPLETA | finale 3 (Rubasecondi) | Salto | canaledieci |
+| C'È CHI LA CERCA ALL'ESTERO | finale (13/08/2026) | Fortuna | canaledieci |
+| LA DEA DEL CASO E DEL DESTINO | finale | Fortuna | canaledieci |
+| IN UN DETTO AIUTA GLI AUDACI | finale | Fortuna | canaledieci |
+| DEI DUE MONDI A SPOLETO | finale 3 (05/03/2026) | Festival | canaledieci |
+
+**CruciRuota veri** (sono **elenchi di parole incrociate, non frasi**: 3–4 orizzontali + 1
+verticale, niente definizioni):
+- Il deserto: CAMMELLI, SAHARA, DUNE, ARIDO, OASI
+- In Giappone: SAMURAI, KIMONO, LOTO, SAKÈ, JUDO
+- In Cina: PANDA, MURAGLIA, SETA, DRAGO, MING, ASIA
+- Gli uccelli: STORMO, NIDO, AIRONE, GUFO, GRU
+- In fondo al mare: VONGOLA, ALGA, RELITTO, BUIO
+
+**Regole per il generatore** (ricavate da circa 40 tabelloni veri):
+1. Ogni tabellone ha un **titolo tematico** (IL CRICETO, AL BUIO, NIRVANA), mai una
+   categoria generica. La frase **non ripete** il titolo.
+2. **Manche a ruota** (classica, animali, musicale, Ciak, Express): una frase dichiarativa
+   di **6–8 parole, 32–41 lettere**, su 3–4 righe; descrive il titolo o ci gioca.
+   - Animali: fatto sull'animale. Ciak: trama parafrasata. Musicale: descrizione di
+     artista o canzone. Locanda di Samira: descrizione del piatto (3–6 parole).
+3. **Finale**: una parola tema, tre frasi di **4–7 parole, 19–27 lettere**, ognuna forma
+   con il tema un'espressione nota (SALTO + MORTALE CON ROTAZIONE COMPLETA) o lo definisce.
+   Risposta esatta, singolare e plurale compresi.
+4. **CruciRuota**: tema + 4–6 parole da 3–8 lettere, incrociate.
+5. **Triplete**: tre frasi brevi su un tema (nessun esempio testuale trovato).
+6. **Proverbio del mese** (jackpot del maialino): un proverbio italiano.
+7. Griglia presunta 4 righe da 12/14/14/12 caselle, a capo senza spezzare parole:
+   non confermata per l'Italia, ma tutti i tabelloni veri raccolti ci stanno.
+   Apostrofi e lettere accentate occupano una casella.
+8. Stile: italiano naturale e intuitivo, articoli e preposizioni presenti, giochi di
+   parole benvenuti, lessico non raro.
+
+**Fonti autentiche in blocco:** il gioco da tavolo Ravensburger (Natale 2025, 220 carte
+manche classica + 108 carte rapide, frasi dichiarate come quelle della TV); la rivista
+di enigmistica ufficiale in edicola; i titoli delle clip su Mediaset Infinity (danno i
+titoli veri, es. «La locanda di Samira: Caponata»); puntate intere dell'era Bongiorno su
+YouTube. Autori dei tabelloni: Alvise Borghi e Daniele Piccinini.
+
 **Metodo per costruirsi l'archivio** (= esercizio D9): guardare la puntata su Infinity
 entro la finestra di disponibilità, mettere in pausa sul tabellone completo, trascrivere
 frase, manche e categoria in un foglio. Automatizzabile per uso personale: registrazione
