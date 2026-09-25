@@ -450,6 +450,32 @@ di enigmistica ufficiale in edicola; i titoli delle clip su Mediaset Infinity (d
 titoli veri, es. «La locanda di Samira: Caponata»); puntate intere dell'era Bongiorno su
 YouTube. Autori dei tabelloni: Alvise Borghi e Daniele Piccinini.
 
+### Raccolte dei fan: verifica del 25/09/2026
+
+**Non esiste nessuna raccolta dei tabelloni fatta da fan**, né completa né parziale, per
+nessuna edizione (Scotti, Papi, Bongiorno). Controllati, dai riassunti di ricerca:
+- gruppi Facebook di fan, X, Telegram, Instagram e TikTok;
+- playlist YouTube, wiki, forum, Fogli Google, Quizlet;
+- 15 repository GitHub clonati e letti direttamente: frasi inventate;
+- il gioco per PC «3.3» (3.500 frasi) e la versione Excel (865): frasi inventate;
+- il libro Rizzoli: «oltre 260 frasi inedite», cioè mai andate in onda.
+
+Reddit non è stato verificabile (bloccato), ma non è comparso in nessun risultato.
+
+Le uniche fonti in blocco di frasi andate in onda:
+1. **Gioco da tavolo Ravensburger 24936** (circa 30 €): 220 carte manche classica + 108
+   carte rapide, dichiarate «le stesse della trasmissione». Da fotografare e trascrivere.
+2. **Titoli delle clip su Mediaset Infinity**, una clip per manche con «tipo di manche:
+   titolo» (es. «Manche Express: Il mondo della moda»). Danno il titolo ogni sera; la frase
+   si vede solo nel video.
+3. **Playlist YouTube dell'era Bongiorno** (1995–2003), solo video.
+
+Frasi vere trovate in più: LA MANDRIA NELLA PRATERIA E I COWBOYS (Triplete, 06/02/2026);
+LA RIVOLUZIONE È FINITA VIVA LA LIBERTÀ (1994, tolta dalla messa in onda).
+
+Correzione: l'edizione Scotti è tornata il 6 maggio 2024 (preserale), poi dal 2 settembre
+2024; è in access prime time da circa il 2025.
+
 **Metodo per costruirsi l'archivio** (= esercizio D9): guardare la puntata su Infinity
 entro la finestra di disponibilità, mettere in pausa sul tabellone completo, trascrivere
 frase, manche e categoria in un foglio. Automatizzabile per uso personale: registrazione
